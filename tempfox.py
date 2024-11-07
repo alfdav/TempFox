@@ -9,8 +9,8 @@ r"""
                      |_|                   
 
 TempFox - AWS Credential Manager and CloudFox Integration Tool
-Author: alfdav
-Version: 0.11
+Author: auslander
+Version: 1.0
 """
 
 import subprocess
@@ -80,7 +80,7 @@ def test_aws_connection(aws_access_key_id, aws_secret_access_key, aws_session_to
         # Parse the JSON response to get identity information
         try:
             identity = json.loads(process.stdout.strip())
-            print("\n✅ AWS connection successful!")
+            print("\n✅ AWS connection successful! Running 🦊 CloudFox")
             print(f"Account: {identity.get('Account', 'N/A')}")
             print(f"Arn: {identity.get('Arn', 'N/A')}")
             print(f"UserId: {identity.get('UserId', 'N/A')}\n")
@@ -107,7 +107,7 @@ def run_cloudfox_aws_all_checks(aws_access_key_id, aws_secret_access_key, aws_se
         })
         
         subprocess.run("cloudfox aws all-checks", shell=True, env=env)
-        print("'cloudfox aws all-checks' completed successfully.")
+        print("🦊 CloudFox completed successfully. Check the results in this ⤴️ directory")
     except subprocess.CalledProcessError as e:
         print(f"Error running 'cloudfox aws all-checks': {e}")
 
@@ -131,7 +131,7 @@ def check_access_key_type():
         key_type = input("\nAre you using an AKIA (long-term) or ASIA (temporary) access key? (AKIA/ASIA): ").upper()
         if key_type in ['AKIA', 'ASIA']:
             return key_type
-        print("Invalid input. Please enter either 'AKIA' or 'ASIA'.")
+        print("Invalid input. Please enter either 'AKIA' or an 'ASIA' token.")
 
 def main():
     try:

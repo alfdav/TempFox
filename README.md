@@ -1,7 +1,7 @@
 # 🦊 TempFox
 
 ## Description
-TempFox is a streamlined Python tool that manages AWS credentials and automates CloudFox security checks. It elegantly handles both long-term (AKIA) and temporary (ASIA) AWS credentials, offering robust token validation and credential management.
+TempFox is a streamlined Python tool that manages AWS credentials and automates CloudFox security checks. It elegantly handles both long-term (AKIA) and temporary (ASIA) AWS credentials.
 
 ```
   _____                   _____ 
@@ -19,7 +19,7 @@ TempFox is a streamlined Python tool that manages AWS credentials and automates 
 - ✅ Smart credential format validation
 - 🔍 Environment variable detection
 - 🧪 AWS connection testing with detailed identity information
-- 🦊 Integrated CloudFox AWS security checks
+- 🦊 Integrated with the awesome tool CloudFox
 - 💻 Interactive user experience
 
 ## Quick Start

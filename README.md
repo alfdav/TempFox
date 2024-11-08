@@ -27,15 +27,15 @@ TempFox is a streamlined Python tool that manages AWS credentials and automates 
 # Clone the repository
 git clone https://github.com/alfdav/tempfox.git
 ```
-```
+```bash
 # Navigate to TempFox directory
 cd tempfox
 ```
-```
+```bash
 # Make script executable
 chmod +x tempfox.py
 ```
-```
+```bash
 # Run TempFox
 python3 tempfox.py
 ```

@@ -1,4 +1,3 @@
-# TempFox
 # 🦊 TempFox
 
 ## Description

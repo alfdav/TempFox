@@ -1,9 +1,10 @@
 # 🦊 TempFox
 
 ## Description
+
 TempFox is a streamlined Python tool that manages AWS credentials and automates CloudFox security checks. It elegantly handles both long-term (AKIA) and temporary (ASIA) AWS credentials.
 
-```
+```bash
   _____                   _____ 
  |_   _|__ _ __ ___  _ _|  ___|____  __
    | |/ _ \ '_ ` _ \| '_ \ |_ / _ \ \/ /
@@ -13,6 +14,7 @@ TempFox is a streamlined Python tool that manages AWS credentials and automates 
 ```
 
 ## Key Features
+
 - 🔄 Automatic AWS CLI installation
 - 🔑 Support for both AKIA (long-term) & ASIA (temporary) credentials
 - ⏰ Token expiration handling
@@ -21,22 +23,31 @@ TempFox is a streamlined Python tool that manages AWS credentials and automates 
 - 🧪 AWS connection testing with detailed identity information
 - 🦊 Integrated with the awesome tool CloudFox
 - 💻 Interactive user experience
+- 📄 Detailed logging and error handling
+- 📂 Output files with timestamps for easy tracking
 
 ## Quick Start
+
 1. Clone the repository
+
 ```bash
 git clone https://github.com/alfdav/tempfox.git
 ```
+
 2. Navigate to TempFox directory and make script executable
+
 ```bash
 cd tempfox && chmod +x tempfox.py
 ```
+
 3. Run TempFox
+
 ```bash
 python3 tempfox.py
 ```
 
 ## Prerequisites
+
 - Python 3.x
 - Linux operating system
 - Internet connection
@@ -46,12 +57,14 @@ python3 tempfox.py
 ## How It Works
 
 ### 1. Credential Management
+
 - Detects and offers to reuse existing AWS credentials
 - Validates AKIA/ASIA credential format
 - Handles token expiration gracefully
 - Processes AWS temporary security tokens
 
 ### 2. AWS CLI Integration
+
 - Automatic installation if not present
 - Tests AWS connectivity
 - Displays detailed identity information:
@@ -60,6 +73,7 @@ python3 tempfox.py
   - User ID
 
 ### 3. CloudFox Integration
+
 - Seamlessly executes CloudFox AWS all security checks
 - Maintains environment variables
 - (Somewhat) Handles execution errors
@@ -67,6 +81,7 @@ python3 tempfox.py
 ## Usage Examples
 
 ### First Time Setup
+
 ```bash
 $ python3 tempfox.py
 🦊 Welcome to TempFox - AWS Credential Manager and CloudFox Integration Tool
@@ -87,6 +102,7 @@ UserId: AROA...
 ```
 
 ### With Existing Credentials
+
 ```bash
 $ python3 tempfox.py
 🦊 Welcome to TempFox - AWS Credential Manager and CloudFox Integration Tool
@@ -104,37 +120,46 @@ Would you like to use the existing AWS_ACCESS_KEY_ID? (y/n): y
 ### Common Issues and Solutions
 
 1. **AWS CLI Installation**
+
    ```bash
    Error installing AWS CLI: [Errno 13] Permission denied
    ```
+
    - Run with sudo privileges
    - Check internet connection
    - Verify system architecture
 
 2. **Credential Format**
+
    ```bash
    ⚠️  Warning: The access key provided doesn't match the expected format (ASIA...)
    ```
+
    - Verify credential type (AKIA/ASIA)
    - Check for typing errors
    - Confirm credential format
 
 3. **Token Expiration**
+
    ```bash
    ⚠️  Error: AWS token has expired. Please obtain new temporary credentials.
    ```
+
    - Obtain new temporary credentials
    - Check token validity period
    - Verify token permissions
 
 ## Contributing
+
 Contributions are welcome! Feel free to:
+
 - Submit issues
 - Fork the repository
 - Create pull requests
 - Suggest improvements
 
 ## License
+
 MIT License
 
 Copyright (c) 2024 David Diaz
@@ -158,6 +183,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ## Disclaimer
+
 This tool is provided as-is. Always review code and follow your organization's security policies before use.
 
 ---

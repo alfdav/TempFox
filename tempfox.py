@@ -17,6 +17,9 @@ import subprocess
 import sys
 import os
 import json
+import logging
+from datetime import datetime
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 def install_aws_cli():
     """
@@ -26,9 +29,9 @@ def install_aws_cli():
         subprocess.run("curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip", shell=True, check=True)
         subprocess.run("unzip awscliv2.zip", shell=True, check=True)
         subprocess.run("sudo ./aws/install", shell=True, cwd=os.getcwd(), check=True)
-        print("AWS CLI installed successfully.")
+        logging.info("AWS CLI installed successfully.")
     except subprocess.CalledProcessError as e:
-        print(f"Error installing AWS CLI: {e}")
+        logging.error(f"Error installing AWS CLI: {e}")
         sys.exit(1)
 
 def check_token_expiration(error_message):
@@ -66,36 +69,55 @@ def test_aws_connection(aws_access_key_id, aws_secret_access_key, aws_session_to
         if process.returncode != 0:
             error_message = process.stderr
             if check_token_expiration(error_message):
-                print("\n⚠️  Error: AWS token has expired. Please obtain new temporary credentials.")
+                logging.warning("AWS token has expired. Please obtain new temporary credentials.")
                 proceed = input("Would you like to enter new credentials? (y/n): ")
                 if proceed.lower() == 'y':
                     main()
                 else:
-                    print("Exiting script.")
+                    logging.info("Exiting script.")
                     sys.exit(1)
             else:
-                print(f"Error testing AWS connection: {error_message}")
+                logging.error(f"Error testing AWS connection: {error_message}")
                 return False
 
         # Parse the JSON response to get identity information
         try:
             identity = json.loads(process.stdout.strip())
-            print("\n✅ AWS connection successful! Running 🦊 CloudFox")
-            print(f"Account: {identity.get('Account', 'N/A')}")
-            print(f"Arn: {identity.get('Arn', 'N/A')}")
-            print(f"UserId: {identity.get('UserId', 'N/A')}\n")
+            logging.info("AWS connection successful! Running CloudFox")
+            logging.info(f"Account: {identity.get('Account', 'N/A')}")
+            logging.info(f"Arn: {identity.get('Arn', 'N/A')}")
+            logging.info(f"UserId: {identity.get('UserId', 'N/A')}")
             return True
         except json.JSONDecodeError:
-            print("Error parsing AWS response")
+            logging.error("Error parsing AWS response")
             return False
 
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        logging.error(f"Unexpected error: {e}")
         return False
+
+def get_aws_account_id(env):
+    """
+    Get the AWS account ID using the current credentials.
+    """
+    try:
+        process = subprocess.run(
+            "/usr/local/bin/aws sts get-caller-identity --output json",
+            shell=True,
+            env=env,
+            capture_output=True,
+            text=True
+        )
+        if process.returncode == 0:
+            identity = json.loads(process.stdout.strip())
+            return identity.get('Account')
+    except Exception as e:
+        logging.error(f"Error getting AWS account ID: {e}")
+    return None
 
 def run_cloudfox_aws_all_checks(aws_access_key_id, aws_secret_access_key, aws_session_token):
     """
-    Run the 'cloudfox aws all-checks' command using the temporary credentials.
+    Run the 'cloudfox aws all-checks' command using the temporary credentials and save output with timestamp.
     """
     try:
         # Create a new environment with all current env variables plus AWS credentials
@@ -106,10 +128,43 @@ def run_cloudfox_aws_all_checks(aws_access_key_id, aws_secret_access_key, aws_se
             "AWS_SESSION_TOKEN": aws_session_token,
         })
         
-        subprocess.run("cloudfox aws all-checks", shell=True, env=env)
-        print("🦊 CloudFox completed successfully. Check the results in this ⤴️ directory")
+        # Get AWS account ID
+        account_id = get_aws_account_id(env)
+        if not account_id:
+            logging.error("Could not retrieve AWS account ID")
+            return
+
+        # Generate timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Create output filenames
+        base_filename = f"cloudfox_aws_{account_id}_{timestamp}"
+        txt_output = f"{base_filename}.txt"
+        json_output = f"{base_filename}.json"
+        
+        # Run CloudFox and capture output
+        process = subprocess.run("cloudfox aws all-checks", shell=True, env=env, capture_output=True, text=True)
+        
+        # Save text output
+        with open(txt_output, 'w') as f:
+            f.write(process.stdout)
+        
+        # Try to parse and save JSON output
+        try:
+            # Attempt to parse the output as JSON
+            json_data = json.loads(process.stdout)
+            with open(json_output, 'w') as f:
+                json.dump(json_data, f, indent=2)
+        except json.JSONDecodeError:
+            # If output is not JSON, create a JSON object with the raw output
+            with open(json_output, 'w') as f:
+                json.dump({"raw_output": process.stdout}, f, indent=2)
+        
+        logging.info(f"CloudFox completed successfully. Results saved to {txt_output} and {json_output}")
     except subprocess.CalledProcessError as e:
-        print(f"Error running 'cloudfox aws all-checks': {e}")
+        logging.error(f"Error running 'cloudfox aws all-checks': {e}")
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
 
 def get_credential(env_var, prompt_text):
     """
@@ -117,7 +172,7 @@ def get_credential(env_var, prompt_text):
     """
     existing_value = os.environ.get(env_var)
     if existing_value:
-        print(f"Found existing {env_var} in environment variables.")
+        logging.info(f"Found existing {env_var} in environment variables.")
         use_existing = input(f"Would you like to use the existing {env_var}? (y/n): ")
         if use_existing.lower() == 'y':
             return existing_value
@@ -131,20 +186,20 @@ def check_access_key_type():
         key_type = input("\nAre you using an AKIA (long-term) or ASIA (temporary) access key? (AKIA/ASIA): ").upper()
         if key_type in ['AKIA', 'ASIA']:
             return key_type
-        print("Invalid input. Please enter either 'AKIA' or an 'ASIA' token.")
+        logging.warning("Invalid input. Please enter either 'AKIA' or 'ASIA'.")
 
 def main():
     try:
         # Print welcome message
-        print("\n🦊 Welcome to TempFox - AWS Credential Manager and CloudFox Integration Tool")
-        print("=" * 70 + "\n")
+        logging.info("\n🦊 Welcome to TempFox - AWS Credential Manager and CloudFox Integration Tool")
+        logging.info("=" * 70 + "\n")
 
         # Check if AWS CLI is installed
         try:
             subprocess.run("/usr/local/bin/aws --version", shell=True, check=True)
-            print("✅ AWS CLI is already installed.")
+            logging.info("AWS CLI is already installed.")
         except (subprocess.CalledProcessError, FileNotFoundError):
-            print("⚙️  AWS CLI is not installed. Installing now...")
+            logging.info("AWS CLI is not installed. Installing now...")
             install_aws_cli()
 
         # Check access key type
@@ -158,10 +213,10 @@ def main():
 
         # Validate access key format
         if not aws_access_key_id.startswith(key_type):
-            print(f"\n⚠️  Warning: The access key provided doesn't match the expected format ({key_type}...)")
+            logging.warning(f"\n⚠️  Warning: The access key provided doesn't match the expected format ({key_type}...)")
             proceed = input("Do you want to proceed anyway? (y/n): ")
             if proceed.lower() != 'y':
-                print("Exiting script.")
+                logging.info("Exiting script.")
                 sys.exit(1)
 
         aws_secret_access_key = get_credential(
@@ -177,7 +232,7 @@ def main():
             )
         else:
             aws_session_token = ""
-            print("\nℹ️  Session token not required for AKIA (long-term) credentials.")
+            logging.info("\nℹ️  Session token not required for AKIA (long-term) credentials.")
 
         # Test AWS connection
         if test_aws_connection(aws_access_key_id, aws_secret_access_key, aws_session_token):
@@ -185,10 +240,10 @@ def main():
             run_cloudfox_aws_all_checks(aws_access_key_id, aws_secret_access_key, aws_session_token)
 
     except KeyboardInterrupt:
-        print("\n\n⚠️  Script interrupted by user. Exiting gracefully...")
+        logging.warning("\n\n⚠️  Script interrupted by user. Exiting gracefully...")
         sys.exit(0)
     except Exception as e:
-        print(f"\n❌ Unexpected error occurred: {e}")
+        logging.error(f"\n❌ Unexpected error occurred: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

@@ -18,51 +18,91 @@ import sys
 import os
 import json
 import logging
-from datetime import datetime
+import shutil
+import glob
+from datetime import datetime, timedelta
+from pathlib import Path
+
+# Constants
+AWS_CLI_DOWNLOAD_URL = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+AWS_CLI_ZIP = "awscliv2.zip"
+MAX_OUTPUT_FILES = 5  # Maximum number of output files to keep
+EXPIRED_TOKEN_INDICATORS = [
+    "token has expired",
+    "security token expired",
+    "SecurityTokenExpired",
+    "ExpiredToken"
+]
+
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
-def install_aws_cli():
-    """
-    Install the AWS CLI on the user's Linux system.
-    """
+def cleanup_temp_files():
+    """Clean up temporary files from AWS CLI installation."""
     try:
-        subprocess.run("curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip", shell=True, check=True)
-        subprocess.run("unzip awscliv2.zip", shell=True, check=True)
-        subprocess.run("sudo ./aws/install", shell=True, cwd=os.getcwd(), check=True)
+        if os.path.exists(AWS_CLI_ZIP):
+            os.remove(AWS_CLI_ZIP)
+        if os.path.exists("aws"):
+            shutil.rmtree("aws")
+    except Exception as e:
+        logging.warning(f"Error cleaning up temporary files: {e}")
+
+def install_aws_cli():
+    """Install the AWS CLI on the user's Linux system."""
+    try:
+        # Download AWS CLI installer
+        subprocess.run(
+            ["curl", "-o", AWS_CLI_ZIP, AWS_CLI_DOWNLOAD_URL],
+            check=True,
+            timeout=300
+        )
+        
+        # Unzip the installer
+        subprocess.run(["unzip", "-o", AWS_CLI_ZIP], check=True)
+        
+        # Install AWS CLI
+        subprocess.run(["sudo", "./aws/install"], check=True)
+        
         logging.info("AWS CLI installed successfully.")
     except subprocess.CalledProcessError as e:
         logging.error(f"Error installing AWS CLI: {e}")
         sys.exit(1)
+    except subprocess.TimeoutExpired:
+        logging.error("Timeout while installing AWS CLI")
+        sys.exit(1)
+    finally:
+        cleanup_temp_files()
 
 def check_token_expiration(error_message):
-    """
-    Check if the error message indicates an expired token.
-    """
-    expired_indicators = [
-        "token has expired",
-        "security token expired",
-        "SecurityTokenExpired",
-        "ExpiredToken"
-    ]
-    return any(indicator.lower() in error_message.lower() for indicator in expired_indicators)
+    """Check if the error message indicates an expired token."""
+    return any(indicator.lower() in error_message.lower() for indicator in EXPIRED_TOKEN_INDICATORS)
+
+def get_aws_cmd():
+    """Get the AWS CLI command path."""
+    aws_cmd = shutil.which("aws")
+    if not aws_cmd:
+        raise FileNotFoundError("AWS CLI not found in PATH")
+    return aws_cmd
 
 def test_aws_connection(aws_access_key_id, aws_secret_access_key, aws_session_token):
-    """
-    Test the AWS connection using the temporary credentials provided by the user.
-    """
+    """Test the AWS connection using the temporary credentials provided by the user."""
     try:
+        aws_cmd = get_aws_cmd()
+        
+        # Prepare environment variables
+        env = os.environ.copy()
+        env.update({
+            "AWS_ACCESS_KEY_ID": aws_access_key_id,
+            "AWS_SECRET_ACCESS_KEY": aws_secret_access_key,
+            "AWS_SESSION_TOKEN": aws_session_token
+        })
+        
         # Capture the output and error messages
         process = subprocess.run(
-            "/usr/local/bin/aws sts get-caller-identity --output json",
-            shell=True,
-            env={
-                "AWS_ACCESS_KEY_ID": aws_access_key_id,
-                "AWS_SECRET_ACCESS_KEY": aws_secret_access_key,
-                "AWS_SESSION_TOKEN": aws_session_token,
-                "PATH": os.environ.get("PATH", "")
-            },
+            [aws_cmd, "sts", "get-caller-identity", "--output", "json"],
+            env=env,
             capture_output=True,
-            text=True
+            text=True,
+            timeout=30
         )
 
         # Check for errors first
@@ -97,16 +137,15 @@ def test_aws_connection(aws_access_key_id, aws_secret_access_key, aws_session_to
         return False
 
 def get_aws_account_id(env):
-    """
-    Get the AWS account ID using the current credentials.
-    """
+    """Get the AWS account ID using the current credentials."""
     try:
+        aws_cmd = get_aws_cmd()
         process = subprocess.run(
-            "/usr/local/bin/aws sts get-caller-identity --output json",
-            shell=True,
+            [aws_cmd, "sts", "get-caller-identity", "--output", "json"],
             env=env,
             capture_output=True,
-            text=True
+            text=True,
+            timeout=30
         )
         if process.returncode == 0:
             identity = json.loads(process.stdout.strip())
@@ -115,10 +154,23 @@ def get_aws_account_id(env):
         logging.error(f"Error getting AWS account ID: {e}")
     return None
 
+def cleanup_old_output_files():
+    """Clean up old output files, keeping only the most recent ones."""
+    try:
+        # Get all cloudfox output files
+        txt_files = sorted(glob.glob("cloudfox_aws_*.txt"), reverse=True)
+        json_files = sorted(glob.glob("cloudfox_aws_*.json"), reverse=True)
+        
+        # Remove old files keeping only MAX_OUTPUT_FILES most recent
+        for old_file in txt_files[MAX_OUTPUT_FILES:]:
+            os.remove(old_file)
+        for old_file in json_files[MAX_OUTPUT_FILES:]:
+            os.remove(old_file)
+    except Exception as e:
+        logging.warning(f"Error cleaning up old output files: {e}")
+
 def run_cloudfox_aws_all_checks(aws_access_key_id, aws_secret_access_key, aws_session_token):
-    """
-    Run the 'cloudfox aws all-checks' command using the temporary credentials and save output with timestamp.
-    """
+    """Run the 'cloudfox aws all-checks' command using the temporary credentials."""
     try:
         # Create a new environment with all current env variables plus AWS credentials
         env = os.environ.copy()
@@ -134,6 +186,9 @@ def run_cloudfox_aws_all_checks(aws_access_key_id, aws_secret_access_key, aws_se
             logging.error("Could not retrieve AWS account ID")
             return
 
+        # Clean up old output files
+        cleanup_old_output_files()
+
         # Generate timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
@@ -143,7 +198,13 @@ def run_cloudfox_aws_all_checks(aws_access_key_id, aws_secret_access_key, aws_se
         json_output = f"{base_filename}.json"
         
         # Run CloudFox and capture output
-        process = subprocess.run("cloudfox aws all-checks", shell=True, env=env, capture_output=True, text=True)
+        process = subprocess.run(
+            ["cloudfox", "aws", "all-checks"],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=600  # 10 minute timeout
+        )
         
         # Save text output
         with open(txt_output, 'w') as f:
@@ -167,9 +228,7 @@ def run_cloudfox_aws_all_checks(aws_access_key_id, aws_secret_access_key, aws_se
         logging.error(f"Unexpected error: {e}")
 
 def get_credential(env_var, prompt_text):
-    """
-    Check for existing credential and prompt user to use it or enter new one.
-    """
+    """Check for existing credential and prompt user to use it or enter new one."""
     existing_value = os.environ.get(env_var)
     if existing_value:
         logging.info(f"Found existing {env_var} in environment variables.")
@@ -179,28 +238,55 @@ def get_credential(env_var, prompt_text):
     return input(prompt_text)
 
 def check_access_key_type():
-    """
-    Prompt user for the type of AWS access key they're using.
-    """
+    """Prompt user for the type of AWS access key they're using."""
     while True:
         key_type = input("\nAre you using an AKIA (long-term) or ASIA (temporary) access key? (AKIA/ASIA): ").upper()
         if key_type in ['AKIA', 'ASIA']:
             return key_type
         logging.warning("Invalid input. Please enter either 'AKIA' or 'ASIA'.")
 
+def check_aws_cli():
+    """Check if AWS CLI is installed and get its version."""
+    try:
+        aws_cmd = get_aws_cmd()
+        process = subprocess.run(
+            [aws_cmd, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        if process.returncode == 0:
+            logging.info(f"AWS CLI is already installed: {process.stdout.strip()}")
+            return True
+    except (subprocess.CalledProcessError, FileNotFoundError, Exception) as e:
+        logging.info("AWS CLI is not installed. Installing now...")
+        install_aws_cli()
+        return True
+    return False
+
+def cleanup_on_exit():
+    """Cleanup function to be called when script exits."""
+    try:
+        cleanup_temp_files()
+        cleanup_old_output_files()
+    except Exception as e:
+        logging.warning(f"Error during cleanup: {e}")
+
 def main():
+    """Main function to run TempFox."""
     try:
         # Print welcome message
         logging.info("\n🦊 Welcome to TempFox - AWS Credential Manager and CloudFox Integration Tool")
         logging.info("=" * 70 + "\n")
 
+        # Register cleanup function
+        import atexit
+        atexit.register(cleanup_on_exit)
+
         # Check if AWS CLI is installed
-        try:
-            subprocess.run("/usr/local/bin/aws --version", shell=True, check=True)
-            logging.info("AWS CLI is already installed.")
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            logging.info("AWS CLI is not installed. Installing now...")
-            install_aws_cli()
+        if not check_aws_cli():
+            logging.error("Failed to verify or install AWS CLI")
+            sys.exit(1)
 
         # Check access key type
         key_type = check_access_key_type()

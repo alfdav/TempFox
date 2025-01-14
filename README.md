@@ -1,5 +1,9 @@
 # 🦊 TempFox
 
+[![PyPI version](https://badge.fury.io/py/tempfox.svg)](https://badge.fury.io/py/tempfox)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
+
 ## Description
 
 TempFox is a streamlined Python tool that manages AWS credentials and automates CloudFox security checks. It elegantly handles both long-term (AKIA) and temporary (ASIA) AWS credentials.
@@ -15,148 +19,78 @@ TempFox is a streamlined Python tool that manages AWS credentials and automates 
 
 ## Key Features
 
-- 🔄 Automatic AWS CLI installation
+- 🔄 Automatic AWS CLI installation and version detection
 - 🔑 Support for both AKIA (long-term) & ASIA (temporary) credentials
-- ⏰ Token expiration handling
-- ✅ Smart credential format validation
-- 🔍 Environment variable detection
+- ⏰ Token expiration handling with auto-renewal option
+- ✅ Smart credential format validation and verification
+- 🔍 Environment variable detection and reuse
 - 🧪 AWS connection testing with detailed identity information
-- 🦊 Integrated with the awesome tool CloudFox
-- 💻 Interactive user experience
-- 📄 Detailed logging and error handling
-- 📂 Output files with timestamps for easy tracking
+- 🦊 Seamless CloudFox integration for security checks
+
+## Installation
+
+There are several ways to install TempFox:
+
+### Using pip (Recommended)
+```bash
+pip install tempfox
+```
+
+### From Source
+```bash
+git clone https://github.com/alfdav/tempfox.git
+cd tempfox
+pip install -e .
+```
+
+### Dependencies
+- Python 3.6+
+- boto3 >= 1.26.0
+- AWS CLI (automatically installed if missing)
 
 ## Quick Start
 
-1. Clone the repository
-
+1. Basic Usage:
 ```bash
-git clone https://github.com/alfdav/tempfox.git
+tempfox
 ```
 
-2. Navigate to TempFox directory and make script executable
-
+2. Using with AWS Access Key:
 ```bash
-cd tempfox && chmod +x tempfox.py
+# Long-term credentials (AKIA)
+export AWS_ACCESS_KEY_ID=AKIAXXXXXXXXXXXXXXXX
+export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+tempfox
+
+# Temporary credentials (ASIA)
+export AWS_ACCESS_KEY_ID=ASIAXXXXXXXXXXXXXXXX
+export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+export AWS_SESSION_TOKEN=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+tempfox
 ```
 
-3. Run TempFox
-
+3. Auto-renewal Mode:
 ```bash
-python3 tempfox.py
+tempfox --auto-renew
+```
+
+4. Run CloudFox Security Checks:
+```bash
+# After credentials are configured
+tempfox --cloudfox
+```
+
+5. Check Credential Status:
+```bash
+tempfox --status
 ```
 
 ## Prerequisites
 
-- Python 3.x
+- Python 3.6 or higher
 - Linux operating system
 - Internet connection
-- CloudFox installed
 - Sudo privileges (for AWS CLI installation if needed)
-
-## How It Works
-
-### 1. Credential Management
-
-- Detects and offers to reuse existing AWS credentials
-- Validates AKIA/ASIA credential format
-- Handles token expiration gracefully
-- Processes AWS temporary security tokens
-
-### 2. AWS CLI Integration
-
-- Automatic installation if not present
-- Tests AWS connectivity
-- Displays detailed identity information:
-  - Account ID
-  - ARN
-  - User ID
-
-### 3. CloudFox Integration
-
-- Seamlessly executes CloudFox AWS all security checks
-- Maintains environment variables
-- (Somewhat) Handles execution errors
-
-## Usage Examples
-
-### First Time Setup
-
-```bash
-$ python3 tempfox.py
-🦊 Welcome to TempFox - AWS Credential Manager and CloudFox Integration Tool
-======================================================================
-
-⚙️  AWS CLI is not installed. Installing now...
-✅ AWS CLI installed successfully.
-
-Are you using an AKIA (long-term) or ASIA (temporary) access key? (AKIA/ASIA): ASIA
-Enter your AWS_ACCESS_KEY_ID: ASIA...
-Enter your AWS_SECRET_ACCESS_KEY: ****
-Enter your AWS_SESSION_TOKEN: ****
-
-✅ AWS connection successful!
-Account: 123456789012
-Arn: arn:aws:sts::123456789012:assumed-role/example-role/session-name
-UserId: AROA...
-```
-
-### With Existing Credentials
-
-```bash
-$ python3 tempfox.py
-🦊 Welcome to TempFox - AWS Credential Manager and CloudFox Integration Tool
-======================================================================
-
-✅ AWS CLI is already installed.
-
-Are you using an AKIA (long-term) or ASIA (temporary) access key? (AKIA/ASIA): ASIA
-Found existing AWS_ACCESS_KEY_ID in environment variables.
-Would you like to use the existing AWS_ACCESS_KEY_ID? (y/n): y
-```
-
-## Troubleshooting
-
-### Common Issues and Solutions
-
-1. **AWS CLI Installation**
-
-   ```bash
-   Error installing AWS CLI: [Errno 13] Permission denied
-   ```
-
-   - Run with sudo privileges
-   - Check internet connection
-   - Verify system architecture
-
-2. **Credential Format**
-
-   ```bash
-   ⚠️  Warning: The access key provided doesn't match the expected format (ASIA...)
-   ```
-
-   - Verify credential type (AKIA/ASIA)
-   - Check for typing errors
-   - Confirm credential format
-
-3. **Token Expiration**
-
-   ```bash
-   ⚠️  Error: AWS token has expired. Please obtain new temporary credentials.
-   ```
-
-   - Obtain new temporary credentials
-   - Check token validity period
-   - Verify token permissions
-
-## Contributing
-
-Contributions are welcome! Feel free to:
-
-- Submit issues
-- Fork the repository
-- Create pull requests
-- Suggest improvements
 
 ## License
 
@@ -184,7 +118,11 @@ SOFTWARE.
 
 ## Disclaimer
 
-This tool is provided as-is. Always review code and follow your organization's security policies before use.
+THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER, AUTHORS, OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+USE OF THIS SOFTWARE IS ENTIRELY AT YOUR OWN RISK. THE AUTHORS ASSUME NO RESPONSIBILITY OR LIABILITY FOR ANY ERRORS OR OMISSIONS IN THE CONTENT OF THIS SOFTWARE. THE INFORMATION CONTAINED IN THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS WITH NO GUARANTEES OF COMPLETENESS, ACCURACY, USEFULNESS OR TIMELINESS.
+
+By using this software, you acknowledge and agree that you are using it at your own risk and discretion. The authors shall not be held responsible for any security breaches, data loss, or any other damages resulting from the use of this software.
 
 ---
 Made with ❤️ by David

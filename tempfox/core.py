@@ -20,6 +20,8 @@ import json
 import logging
 import shutil
 import glob
+import argparse
+import importlib.metadata
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -272,9 +274,21 @@ def cleanup_on_exit():
     except Exception as e:
         logging.warning(f"Error during cleanup: {e}")
 
+def get_version():
+    """Get the package version."""
+    try:
+        return importlib.metadata.version("tempfox")
+    except importlib.metadata.PackageNotFoundError:
+        return "1.0.0"  # Fallback version
+
 def main():
     """Main function to run TempFox."""
     try:
+        # Parse command line arguments
+        parser = argparse.ArgumentParser(description="TempFox - AWS Credential Manager and CloudFox Integration Tool")
+        parser.add_argument('--version', '-v', action='version', version=f'TempFox {get_version()}')
+        parser.parse_args()
+
         # Print welcome message
         logging.info("\n🦊 Welcome to TempFox - AWS Credential Manager and CloudFox Integration Tool")
         logging.info("=" * 70 + "\n")

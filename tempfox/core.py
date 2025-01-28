@@ -9,7 +9,7 @@ r"""
                      |_|                   
 
 TempFox - AWS Credential Manager and CloudFox Integration Tool
-Author: auslander
+Author: David Diazr
 Version: 1.0
 """
 

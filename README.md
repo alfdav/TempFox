@@ -31,20 +31,54 @@ TempFox is a streamlined Python tool that manages AWS credentials and automates 
 
 There are several ways to install TempFox:
 
-### Using pip (Recommended)
+### Using UV (Recommended)
+```bash
+# Install UV if not already installed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install TempFox
+uv tool install tempfox
+```
+
+### Using Installation Scripts
+```bash
+# Unix/Linux/macOS
+curl -sSL https://raw.githubusercontent.com/alfdav/tempfox/main/install.sh | bash
+
+# Windows PowerShell
+iwr https://raw.githubusercontent.com/alfdav/tempfox/main/install.ps1 | iex
+```
+
+### Using pip
 ```bash
 pip install tempfox
 ```
 
-### From Source
+### From Source with UV
 ```bash
 git clone https://github.com/alfdav/tempfox.git
 cd tempfox
-pip install -e .
+uv sync
+uv run tempfox
+```
+
+### Using Docker
+```bash
+# Pull and run
+docker run --rm -it \
+  -e AWS_ACCESS_KEY_ID=your_key \
+  -e AWS_SECRET_ACCESS_KEY=your_secret \
+  ghcr.io/alfdav/tempfox:latest
+
+# Or build locally
+git clone https://github.com/alfdav/tempfox.git
+cd tempfox
+docker build -t tempfox .
+docker run --rm -it tempfox
 ```
 
 ### Dependencies
-- Python 3.6+
+- Python 3.8+
 - boto3 >= 1.26.0
 - AWS CLI (automatically installed if missing)
 
@@ -85,12 +119,52 @@ tempfox --cloudfox
 tempfox --status
 ```
 
+## Development
+
+### Using UV (Recommended)
+```bash
+# Clone the repository
+git clone https://github.com/alfdav/tempfox.git
+cd tempfox
+
+# Install dependencies
+uv sync
+
+# Run in development mode
+uv run tempfox
+
+# Run tests
+uv run pytest
+
+# Format code
+uv run black .
+uv run isort .
+
+# Type checking
+uv run mypy tempfox/
+```
+
+### Using Docker for Development
+```bash
+# Build development image
+docker build -f Dockerfile.dev -t tempfox-dev .
+
+# Run development container
+docker run --rm -it \
+  -v $(pwd):/app \
+  -v ~/.aws:/home/tempfox/.aws:ro \
+  tempfox-dev
+
+# Or use docker-compose
+docker-compose run tempfox-dev
+```
+
 ## Prerequisites
 
-- Python 3.6 or higher
-- Linux operating system
+- Python 3.8 or higher
+- Linux/macOS/Windows operating system
 - Internet connection
-- Sudo privileges (for AWS CLI installation if needed)
+- UV package manager (recommended) or pip
 
 ## License
 

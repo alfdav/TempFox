@@ -1,0 +1,48 @@
+# Development Dockerfile with additional tools
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_CACHE_DIR=/tmp/uv-cache
+
+# Install system dependencies including development tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    unzip \
+    git \
+    vim \
+    bash-completion \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install UV
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Create app directory
+WORKDIR /app
+
+# Copy UV configuration files
+COPY pyproject.toml ./
+COPY uv.lock* ./
+
+# Install dependencies including dev dependencies
+RUN uv sync --frozen
+
+# Copy application code
+COPY tempfox/ ./tempfox/
+COPY README.md ./
+
+# Install the package in development mode
+RUN uv pip install -e .
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash tempfox
+USER tempfox
+
+# Set up bash completion and aliases
+RUN echo 'alias ll="ls -la"' >> ~/.bashrc && \
+    echo 'alias la="ls -A"' >> ~/.bashrc && \
+    echo 'alias l="ls -CF"' >> ~/.bashrc
+
+# Default command for development
+CMD ["bash"]

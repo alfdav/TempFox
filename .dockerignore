@@ -63,7 +63,6 @@ docs/_build/
 .uv-cache/
 
 # Docker
-Dockerfile*
 docker-compose*.yml
 .dockerignore
 

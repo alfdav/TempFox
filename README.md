@@ -19,13 +19,16 @@ TempFox is a streamlined Python tool that manages AWS credentials and automates 
 
 ## Key Features
 
+- 🚀 **Comprehensive Pre-flight Checks**: Automatic verification and installation of all dependencies
 - 🔄 Automatic AWS CLI installation and version detection
+- 🐹 **Go Binary Management**: Automatic Go installation and configuration
+- 🦊 **CloudFox Integration**: Automatic CloudFox installation and seamless security checks
 - 🔑 Support for both AKIA (long-term) & ASIA (temporary) credentials
 - ⏰ Token expiration handling with auto-renewal option
 - ✅ Smart credential format validation and verification
 - 🔍 Environment variable detection and reuse
 - 🧪 AWS connection testing with detailed identity information
-- 🦊 Seamless CloudFox integration for security checks
+- 🛡️ Cross-platform dependency management (Windows, macOS, Linux)
 
 ## Installation
 
@@ -78,45 +81,69 @@ docker run --rm -it tempfox
 ```
 
 ### Dependencies
+
+TempFox automatically manages all its dependencies through comprehensive pre-flight checks:
+
+**Automatically Installed:**
+- AWS CLI (if missing)
+- Go binary (if missing) 
+- CloudFox security tool (if missing)
+- UV package manager (if missing, via installation scripts)
+
+**Required:**
 - Python 3.8+
-- boto3 >= 1.26.0
-- AWS CLI (automatically installed if missing)
+- Internet connection for downloads
+
+**Optional but Recommended:**
+- UV package manager (for faster dependency management)
+
+**Python Dependencies:**
+- boto3 >= 1.26.0 (automatically installed)
 
 ## Quick Start
 
-1. Basic Usage:
+### First Run - Automatic Setup
+On your first run, TempFox will automatically perform pre-flight checks and install any missing dependencies:
+
 ```bash
 tempfox
 ```
 
-2. Using with AWS Access Key:
+This will:
+1. ✅ Verify Python installation
+2. 📦 Check UV package manager (optional but recommended)
+3. 🔧 Install Go if missing
+4. 🦊 Install CloudFox if missing  
+5. 🔄 Install AWS CLI if missing
+6. 🚀 Launch TempFox
+
+### Using with AWS Credentials
+
+**Long-term credentials (AKIA):**
 ```bash
-# Long-term credentials (AKIA)
 export AWS_ACCESS_KEY_ID=AKIAXXXXXXXXXXXXXXXX
 export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 tempfox
+```
 
-# Temporary credentials (ASIA)
+**Temporary credentials (ASIA):**
+```bash
 export AWS_ACCESS_KEY_ID=ASIAXXXXXXXXXXXXXXXX
 export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 export AWS_SESSION_TOKEN=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 tempfox
 ```
 
-3. Auto-renewal Mode:
+### Advanced Options
+
+**Skip pre-flight checks (not recommended):**
 ```bash
-tempfox --auto-renew
+tempfox --skip-preflight
 ```
 
-4. Run CloudFox Security Checks:
+**Check version:**
 ```bash
-# After credentials are configured
-tempfox --cloudfox
-```
-
-5. Check Credential Status:
-```bash
-tempfox --status
+tempfox --version
 ```
 
 ## Development

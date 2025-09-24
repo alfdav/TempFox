@@ -26,7 +26,7 @@ COPY README.md ./
 COPY tempfox/ ./tempfox/
 
 # Install dependencies and the package
-RUN uv sync --no-group dev && uv pip install -e .
+RUN uv sync --no-dev && uv pip install -e .
 
 # Create non-root user and set up UV cache in user home
 RUN useradd --create-home --shell /bin/bash tempfox && \

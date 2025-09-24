@@ -28,6 +28,7 @@ import tarfile
 import urllib.request
 import zipfile
 from datetime import datetime
+from typing import Dict, List, Optional, Set, Tuple, Union, Any
 
 # Constants
 MAX_OUTPUT_FILES = 5  # Maximum number of output files to keep
@@ -47,7 +48,7 @@ GO_INSTALL_DIR = os.path.expanduser("~/.local/go")
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 
-def cleanup_temp_files():
+def cleanup_temp_files() -> None:
     """Clean up temporary files from installations."""
     try:
         # AWS CLI temp files
@@ -70,29 +71,29 @@ def cleanup_temp_files():
         logging.warning(f"Error cleaning up temporary files: {e}")
 
 
-def get_aws_config_dir():
+def get_aws_config_dir() -> str:
     """Get the AWS configuration directory path."""
     return os.path.expanduser("~/.aws")
 
 
-def get_aws_credentials_file():
+def get_aws_credentials_file() -> str:
     """Get the AWS credentials file path."""
     return os.path.join(get_aws_config_dir(), "credentials")
 
 
-def get_aws_config_file():
+def get_aws_config_file() -> str:
     """Get the AWS config file path."""
     return os.path.join(get_aws_config_dir(), "config")
 
 
-def ensure_aws_config_dir():
+def ensure_aws_config_dir() -> str:
     """Ensure the AWS configuration directory exists."""
     config_dir = get_aws_config_dir()
     os.makedirs(config_dir, exist_ok=True)
     return config_dir
 
 
-def read_aws_credentials():
+def read_aws_credentials() -> configparser.ConfigParser:
     """Read the AWS credentials file and return a ConfigParser object."""
     credentials_file = get_aws_credentials_file()
     config = configparser.ConfigParser()
@@ -106,7 +107,7 @@ def read_aws_credentials():
     return config
 
 
-def read_aws_config():
+def read_aws_config() -> configparser.ConfigParser:
     """Read the AWS config file and return a ConfigParser object."""
     config_file = get_aws_config_file()
     config = configparser.ConfigParser()
@@ -120,7 +121,7 @@ def read_aws_config():
     return config
 
 
-def write_aws_credentials(config):
+def write_aws_credentials(config: configparser.ConfigParser) -> bool:
     """Write the AWS credentials configuration to file."""
     ensure_aws_config_dir()
     credentials_file = get_aws_credentials_file()
@@ -136,7 +137,7 @@ def write_aws_credentials(config):
         return False
 
 
-def write_aws_config(config):
+def write_aws_config(config: configparser.ConfigParser) -> bool:
     """Write the AWS config configuration to file."""
     ensure_aws_config_dir()
     config_file = get_aws_config_file()
@@ -152,12 +153,12 @@ def write_aws_config(config):
         return False
 
 
-def list_aws_profiles():
+def list_aws_profiles() -> List[str]:
     """List all available AWS profiles."""
     credentials_config = read_aws_credentials()
     config_config = read_aws_config()
 
-    profiles = set()
+    profiles: Set[str] = set()
 
     # Get profiles from credentials file
     for section in credentials_config.sections():
@@ -173,14 +174,14 @@ def list_aws_profiles():
     return sorted(profiles)
 
 
-def get_tempfox_profiles():
+def get_tempfox_profiles() -> List[str]:
     """Get all TempFox-created profiles."""
     all_profiles = list_aws_profiles()
     tempfox_profiles = [p for p in all_profiles if p.startswith("tempfox-")]
     return tempfox_profiles
 
 
-def profile_exists(profile_name):
+def profile_exists(profile_name: str) -> bool:
     """Check if a profile already exists."""
     credentials_config = read_aws_credentials()
     config_config = read_aws_config()
@@ -201,13 +202,13 @@ def profile_exists(profile_name):
 
 
 def create_aws_profile(
-    profile_name,
-    aws_access_key_id,
-    aws_secret_access_key,
-    aws_session_token=None,
-    region=None,
-    output_format="json",
-):
+    profile_name: str,
+    aws_access_key_id: str,
+    aws_secret_access_key: str,
+    aws_session_token: Optional[str] = None,
+    region: Optional[str] = None,
+    output_format: str = "json",
+) -> bool:
     """Create or update an AWS profile with the given credentials."""
     try:
         # Read existing configurations
@@ -255,7 +256,7 @@ def create_aws_profile(
         return False
 
 
-def delete_aws_profile(profile_name):
+def delete_aws_profile(profile_name: str) -> bool:
     """Delete an AWS profile."""
     try:
         credentials_config = read_aws_credentials()
@@ -283,7 +284,7 @@ def delete_aws_profile(profile_name):
         return False
 
 
-def generate_profile_name(aws_access_key_id, key_type):
+def generate_profile_name(aws_access_key_id: str, key_type: str) -> str:
     """Generate a unique profile name for TempFox."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     # Use last 8 characters of access key for uniqueness
@@ -294,7 +295,7 @@ def generate_profile_name(aws_access_key_id, key_type):
     return profile_name
 
 
-def get_aws_regions():
+def get_aws_regions() -> List[str]:
     """Get a list of common AWS regions."""
     return [
         "us-east-1",  # N. Virginia
@@ -313,8 +314,8 @@ def get_aws_regions():
 
 
 def prompt_for_profile_creation(
-    aws_access_key_id, aws_secret_access_key, aws_session_token, key_type
-):
+    aws_access_key_id: str, aws_secret_access_key: str, aws_session_token: str, key_type: str
+) -> Optional[Dict[str, Optional[str]]]:
     """Prompt user for profile creation options."""
     logging.info("\n" + "=" * 60)
     logging.info("🔐 AWS Profile Management")
@@ -423,7 +424,7 @@ def prompt_for_profile_creation(
     }
 
 
-def get_aws_cli_download_url():
+def get_aws_cli_download_url() -> str:
     """Get the appropriate AWS CLI download URL for the current platform."""
     system, arch = get_platform_info()
 
@@ -446,7 +447,7 @@ def get_aws_cli_download_url():
         raise ValueError(f"Unsupported platform: {system}-{arch}")
 
 
-def install_aws_cli():
+def install_aws_cli() -> bool:
     """Install the AWS CLI for the current platform."""
     try:
         system, arch = get_platform_info()
@@ -516,7 +517,7 @@ def install_aws_cli():
         cleanup_temp_files()
 
 
-def check_token_expiration(error_message):
+def check_token_expiration(error_message: str) -> bool:
     """Check if the error message indicates an expired token."""
     return any(
         indicator.lower() in error_message.lower()
@@ -524,7 +525,7 @@ def check_token_expiration(error_message):
     )
 
 
-def get_aws_cmd():
+def get_aws_cmd() -> str:
     """Get the AWS CLI command path."""
     aws_cmd = shutil.which("aws")
     if not aws_cmd:
@@ -532,7 +533,7 @@ def get_aws_cmd():
     return aws_cmd
 
 
-def test_aws_connection(aws_access_key_id, aws_secret_access_key, aws_session_token):
+def test_aws_connection(aws_access_key_id: str, aws_secret_access_key: str, aws_session_token: str) -> bool:
     """Test the AWS connection using the temporary credentials provided by the user."""
     try:
         aws_cmd = get_aws_cmd()
@@ -590,7 +591,7 @@ def test_aws_connection(aws_access_key_id, aws_secret_access_key, aws_session_to
         return False
 
 
-def get_aws_account_id(env):
+def get_aws_account_id(env: Dict[str, str]) -> Optional[str]:
     """Get the AWS account ID using the current credentials."""
     try:
         aws_cmd = get_aws_cmd()
@@ -609,7 +610,7 @@ def get_aws_account_id(env):
     return None
 
 
-def cleanup_old_output_files():
+def cleanup_old_output_files() -> None:
     """Clean up old output files, keeping only the most recent ones."""
     try:
         # Get all cloudfox output files
@@ -626,8 +627,8 @@ def cleanup_old_output_files():
 
 
 def run_cloudfox_aws_all_checks(
-    aws_access_key_id, aws_secret_access_key, aws_session_token
-):
+    aws_access_key_id: str, aws_secret_access_key: str, aws_session_token: str
+) -> None:
     """Run the 'cloudfox aws all-checks' command using the temporary credentials."""
     try:
         # Create a new environment with all current env variables plus AWS credentials
@@ -691,7 +692,7 @@ def run_cloudfox_aws_all_checks(
         logging.error(f"Unexpected error: {e}")
 
 
-def get_credential(env_var, prompt_text):
+def get_credential(env_var: str, prompt_text: str) -> str:
     """Check for existing credential and prompt user to use it or enter new one."""
     existing_value = os.environ.get(env_var)
     if existing_value:
@@ -702,7 +703,7 @@ def get_credential(env_var, prompt_text):
     return input(prompt_text)
 
 
-def check_access_key_type():
+def check_access_key_type() -> str:
     """Prompt user for the type of AWS access key they're using."""
     while True:
         key_type = input(
@@ -714,7 +715,7 @@ def check_access_key_type():
         logging.warning("Invalid input. Please enter either 'AKIA' or 'ASIA'.")
 
 
-def check_aws_cli():
+def check_aws_cli() -> bool:
     """Check if AWS CLI is installed and get its version."""
     try:
         aws_cmd = get_aws_cmd()
@@ -730,7 +731,7 @@ def check_aws_cli():
     return False
 
 
-def cleanup_on_exit():
+def cleanup_on_exit() -> None:
     """Cleanup function to be called when script exits."""
     try:
         cleanup_temp_files()
@@ -739,7 +740,7 @@ def cleanup_on_exit():
         logging.warning(f"Error during cleanup: {e}")
 
 
-def get_version():
+def get_version() -> str:
     """Get the package version."""
     try:
         return importlib.metadata.version("tempfox")
@@ -747,7 +748,7 @@ def get_version():
         return "1.0.0"  # Fallback version
 
 
-def get_platform_info():
+def get_platform_info() -> Tuple[str, str]:
     """Get platform information for binary downloads."""
     system = platform.system().lower()
     machine = platform.machine().lower()
@@ -765,7 +766,7 @@ def get_platform_info():
     return system, arch
 
 
-def check_go_installation():
+def check_go_installation() -> Tuple[bool, Optional[str]]:
     """Check if Go is installed and return version info."""
     try:
         go_cmd = shutil.which("go")
@@ -788,7 +789,7 @@ def check_go_installation():
         return False, None
 
 
-def install_go():
+def install_go() -> bool:
     """Install Go binary for the current platform."""
     try:
         system, arch = get_platform_info()
@@ -847,7 +848,7 @@ def install_go():
         return False
 
 
-def check_cloudfox_installation():
+def check_cloudfox_installation() -> Tuple[bool, Optional[str]]:
     """Check if CloudFox is installed and return version info."""
     try:
         cloudfox_cmd = shutil.which("cloudfox")
@@ -877,7 +878,7 @@ def check_cloudfox_installation():
         return False, None
 
 
-def install_cloudfox():
+def install_cloudfox() -> bool:
     """Install CloudFox binary for the current platform."""
     try:
         # First, ensure Go is available
@@ -927,7 +928,7 @@ def install_cloudfox():
         return False
 
 
-def check_uv_installation():
+def check_uv_installation() -> Tuple[bool, Optional[str]]:
     """Check if UV package manager is installed."""
     try:
         uv_cmd = shutil.which("uv")
@@ -950,7 +951,7 @@ def check_uv_installation():
         return False, None
 
 
-def run_preflight_checks():
+def run_preflight_checks() -> bool:
     """Run comprehensive pre-flight checks for all dependencies."""
     logging.info("🚀 Running TempFox pre-flight checks...")
     logging.info("=" * 50)
@@ -1034,7 +1035,7 @@ def run_preflight_checks():
         return False
 
 
-def main():
+def main() -> None:
     """Main function to run TempFox."""
     try:
         # Parse command line arguments

@@ -401,9 +401,9 @@ def prompt_for_profile_creation(
 
     for i, region in enumerate(regions, 1):
         logging.info(f"  {i}. {region}")
-    logging.info(f"  {len(regions)+1}. Skip region configuration")
+    logging.info(f"  {len(regions) + 1}. Skip region configuration")
 
-    region_choice = input(f"\nChoose region (0-{len(regions)+1}): ").strip()
+    region_choice = input(f"\nChoose region (0-{len(regions) + 1}): ").strip()
 
     try:
         choice_num = int(region_choice)
@@ -1194,7 +1194,6 @@ def main():
         if test_aws_connection(
             aws_access_key_id, aws_secret_access_key, aws_session_token
         ):
-
             # Offer profile creation after successful connection (unless disabled)
             profile_config = None
             if not args.no_profile:

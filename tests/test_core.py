@@ -1,6 +1,5 @@
 """Basic unit tests for TempFox core functionality."""
 
-import pytest
 from tempfox import core
 
 
@@ -49,8 +48,8 @@ def test_generate_profile_name():
     assert profile_name.startswith("tempfox-akia-")
     # Profile name should contain last 8 characters of access key
     assert profile_name.count("-") >= 3  # tempfox-akia-{last8chars}-{timestamp}
-    
-    
+
+
 def test_list_aws_profiles_empty():
     """Test listing AWS profiles when none exist."""
     # This will return empty list when no AWS config exists

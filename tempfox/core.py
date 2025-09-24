@@ -28,7 +28,7 @@ import tarfile
 import urllib.request
 import zipfile
 from datetime import datetime
-from typing import Dict, List, Optional, Set, Tuple, Union, Any
+from typing import Dict, List, Optional, Set, Tuple
 
 # Constants
 MAX_OUTPUT_FILES = 5  # Maximum number of output files to keep
@@ -314,7 +314,10 @@ def get_aws_regions() -> List[str]:
 
 
 def prompt_for_profile_creation(
-    aws_access_key_id: str, aws_secret_access_key: str, aws_session_token: str, key_type: str
+    aws_access_key_id: str,
+    aws_secret_access_key: str,
+    aws_session_token: str,
+    key_type: str,
 ) -> Optional[Dict[str, Optional[str]]]:
     """Prompt user for profile creation options."""
     logging.info("\n" + "=" * 60)
@@ -533,7 +536,9 @@ def get_aws_cmd() -> str:
     return aws_cmd
 
 
-def test_aws_connection(aws_access_key_id: str, aws_secret_access_key: str, aws_session_token: str) -> bool:
+def test_aws_connection(
+    aws_access_key_id: str, aws_secret_access_key: str, aws_session_token: str
+) -> bool:
     """Test the AWS connection using the temporary credentials provided by the user."""
     try:
         aws_cmd = get_aws_cmd()
@@ -604,7 +609,8 @@ def get_aws_account_id(env: Dict[str, str]) -> Optional[str]:
         )
         if process.returncode == 0:
             identity = json.loads(process.stdout.strip())
-            return identity.get("Account")
+            account_id = identity.get("Account")
+            return account_id if isinstance(account_id, str) else None
     except Exception as e:
         logging.error(f"Error getting AWS account ID: {e}")
     return None
@@ -1214,12 +1220,12 @@ def main() -> None:
                 )
 
                 success = create_aws_profile(
-                    profile_config["profile_name"],
+                    profile_config["profile_name"] or "tempfox-default",
                     aws_access_key_id,
                     aws_secret_access_key,
                     aws_session_token,
                     profile_config["region"],
-                    profile_config["output_format"],
+                    profile_config["output_format"] or "json",
                 )
 
                 if success:
@@ -1264,13 +1270,13 @@ def main() -> None:
             )
 
             # Final summary
-            if profile_created:
+            if profile_created and profile_config:
                 logging.info("\n" + "=" * 60)
                 logging.info("🎉 TempFox Session Complete")
                 logging.info("=" * 60)
+                profile_name = profile_config.get("profile_name", "tempfox-default")
                 logging.info(
-                    f"✅ AWS profile '{profile_config['profile_name']}' is ready "
-                    f"for reuse"
+                    f"✅ AWS profile '{profile_name}' is ready for reuse"
                 )
                 logging.info("✅ CloudFox analysis completed")
                 logging.info(

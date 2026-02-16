@@ -58,6 +58,7 @@ mem_docs/
 # TempFox specific
 cloudfox_aws_*.txt
 cloudfox_aws_*.json
+.worktrees/
 
 # OS
 .DS_Store

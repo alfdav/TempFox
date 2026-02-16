@@ -87,3 +87,12 @@ def test_expired_token_path_does_not_recurse_into_main(monkeypatch):
     monkeypatch.setattr("builtins.input", lambda *_: "n")
 
     assert core.test_aws_connection("a", "b", "c") is False
+
+
+def test_asia_flow_rejects_empty_session_token(monkeypatch):
+    import tempfox.core as core
+
+    responses = iter(["ASIA", "ASIAX", "SECRET", "", "n"])
+    monkeypatch.setattr("builtins.input", lambda *_: next(responses))
+
+    assert core.validate_session_token("ASIA", "") is False

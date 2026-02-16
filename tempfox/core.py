@@ -85,6 +85,13 @@ def check_access_key_type() -> str:
         logging.warning("Invalid input. Please enter either 'AKIA' or 'ASIA'.")
 
 
+def validate_session_token(key_type: str, aws_session_token: str) -> bool:
+    """Validate session token requirements by key type."""
+    if key_type != "ASIA":
+        return True
+    return bool(aws_session_token.strip())
+
+
 def test_aws_connection(
     aws_access_key_id: str, aws_secret_access_key: str, aws_session_token: str
 ) -> bool:
@@ -309,6 +316,12 @@ def main() -> None:
             aws_session_token = get_credential(
                 "AWS_SESSION_TOKEN", "Enter your AWS_SESSION_TOKEN: "
             )
+            if not validate_session_token(key_type, aws_session_token):
+                logging.error(
+                    "AWS_SESSION_TOKEN is required when using ASIA temporary "
+                    "credentials."
+                )
+                sys.exit(1)
         else:
             aws_session_token = ""
             logging.info(

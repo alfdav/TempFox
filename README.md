@@ -2,7 +2,7 @@
 
 [![PyPI version](https://badge.fury.io/py/tempfox.svg)](https://badge.fury.io/py/tempfox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
 ## Description
 
@@ -98,7 +98,7 @@ TempFox automatically manages all its dependencies through comprehensive pre-fli
 - UV package manager (for faster dependency management)
 
 **Python Dependencies:**
-- boto3 >= 1.26.0 (automatically installed)
+- No required third-party runtime Python dependencies
 
 ## Quick Start
 

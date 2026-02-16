@@ -1,5 +1,7 @@
 """Basic unit tests for TempFox core functionality."""
 
+import pytest
+
 from tempfox import core
 
 
@@ -84,7 +86,6 @@ def test_expired_token_path_does_not_recurse_into_main(monkeypatch):
     monkeypatch.setattr(core, "get_aws_cmd", lambda: "aws")
     monkeypatch.setattr(core.subprocess, "run", lambda *a, **k: Result())
     monkeypatch.setattr(core, "check_token_expiration", lambda msg: True)
-    monkeypatch.setattr("builtins.input", lambda *_: "n")
 
     assert core.test_aws_connection("a", "b", "c") is False
 
@@ -92,7 +93,21 @@ def test_expired_token_path_does_not_recurse_into_main(monkeypatch):
 def test_asia_flow_rejects_empty_session_token(monkeypatch):
     import tempfox.core as core
 
-    responses = iter(["ASIA", "ASIAX", "SECRET", "", "n"])
-    monkeypatch.setattr("builtins.input", lambda *_: next(responses))
-
     assert core.validate_session_token("ASIA", "") is False
+
+
+def test_main_exits_nonzero_when_aws_connection_fails(monkeypatch):
+    import tempfox.core as core
+
+    monkeypatch.setattr(
+        core.sys, "argv", ["tempfox", "--skip-preflight", "--no-profile"]
+    )
+    monkeypatch.setattr(core, "check_aws_cli", lambda: True)
+    monkeypatch.setattr(core, "check_access_key_type", lambda: "AKIA")
+    creds = iter(["AKIAX", "SECRET"])
+    monkeypatch.setattr(core, "get_credential", lambda *_: next(creds))
+    monkeypatch.setattr(core, "test_aws_connection", lambda *args: False)
+
+    with pytest.raises(SystemExit) as exc:
+        core.main()
+    assert exc.value.code == 1

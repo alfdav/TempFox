@@ -125,9 +125,6 @@ def test_aws_connection(
                 logging.warning(
                     "AWS token has expired. Please obtain new temporary credentials."
                 )
-                proceed = input("Would you like to enter new credentials? (y/n): ")
-                if proceed.lower() == "y":
-                    return False
                 logging.info("Exiting script.")
                 return False
             else:
@@ -411,6 +408,9 @@ def main() -> None:
                 logging.info(
                     "\n💡 Your credentials are now saved for future AWS CLI usage!"
                 )
+        else:
+            logging.error("AWS connection test failed. Exiting.")
+            sys.exit(1)
 
     except KeyboardInterrupt:
         logging.warning("\n\n⚠️  Script interrupted by user. Exiting gracefully...")

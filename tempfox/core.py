@@ -120,10 +120,9 @@ def test_aws_connection(
                 )
                 proceed = input("Would you like to enter new credentials? (y/n): ")
                 if proceed.lower() == "y":
-                    main()
-                else:
-                    logging.info("Exiting script.")
-                    sys.exit(1)
+                    return False
+                logging.info("Exiting script.")
+                return False
             else:
                 logging.error(f"Error testing AWS connection: {error_message}")
                 return False

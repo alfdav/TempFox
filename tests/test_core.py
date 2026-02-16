@@ -71,3 +71,19 @@ def test_profile_exists_false():
     """Test profile_exists returns False for non-existent profile."""
     result = core.profile_exists("non-existent-profile-12345")
     assert result is False
+
+
+def test_expired_token_path_does_not_recurse_into_main(monkeypatch):
+    import tempfox.core as core
+
+    class Result:
+        returncode = 1
+        stderr = "ExpiredToken"
+        stdout = ""
+
+    monkeypatch.setattr(core, "get_aws_cmd", lambda: "aws")
+    monkeypatch.setattr(core.subprocess, "run", lambda *a, **k: Result())
+    monkeypatch.setattr(core, "check_token_expiration", lambda msg: True)
+    monkeypatch.setattr("builtins.input", lambda *_: "n")
+
+    assert core.test_aws_connection("a", "b", "c") is False

@@ -111,3 +111,30 @@ def test_main_exits_nonzero_when_aws_connection_fails(monkeypatch):
     with pytest.raises(SystemExit) as exc:
         core.main()
     assert exc.value.code == 1
+
+
+def test_get_credential_uses_getpass_for_secret_prompt(monkeypatch):
+    monkeypatch.delenv("AWS_SECRET_ACCESS_KEY", raising=False)
+    monkeypatch.setattr(core.getpass, "getpass", lambda *_: "secret-value")
+    monkeypatch.setattr(
+        "builtins.input", lambda *_: pytest.fail("input() should not be used")
+    )
+
+    value = core.get_credential(
+        "AWS_SECRET_ACCESS_KEY",
+        "Enter your AWS_SECRET_ACCESS_KEY: ",
+        secret=True,
+    )
+    assert value == "secret-value"
+
+
+def test_get_credential_uses_input_for_non_secret_prompt(monkeypatch):
+    monkeypatch.delenv("AWS_ACCESS_KEY_ID", raising=False)
+    monkeypatch.setattr("builtins.input", lambda *_: "AKIAXXXX")
+
+    value = core.get_credential(
+        "AWS_ACCESS_KEY_ID",
+        "Enter your AWS_ACCESS_KEY_ID: ",
+        secret=False,
+    )
+    assert value == "AKIAXXXX"

@@ -4,6 +4,7 @@
 
 import argparse
 import atexit
+import getpass
 import importlib.metadata
 import json
 import logging
@@ -62,7 +63,7 @@ cleanup_old_output_files = cloudfox.cleanup_old_output_files
 run_cloudfox_aws_all_checks = cloudfox.run_cloudfox_aws_all_checks
 
 
-def get_credential(env_var: str, prompt_text: str) -> str:
+def get_credential(env_var: str, prompt_text: str, secret: bool = False) -> str:
     """Check for existing credential and prompt user to use it or enter new one."""
     existing_value = os.environ.get(env_var)
     if existing_value:
@@ -70,6 +71,8 @@ def get_credential(env_var: str, prompt_text: str) -> str:
         use_existing = input(f"Would you like to use the existing {env_var}? (y/n): ")
         if use_existing.lower() == "y":
             return existing_value
+    if secret:
+        return getpass.getpass(prompt_text)
     return input(prompt_text)
 
 
@@ -305,13 +308,17 @@ def main() -> None:
                 sys.exit(1)
 
         aws_secret_access_key = get_credential(
-            "AWS_SECRET_ACCESS_KEY", "Enter your AWS_SECRET_ACCESS_KEY: "
+            "AWS_SECRET_ACCESS_KEY",
+            "Enter your AWS_SECRET_ACCESS_KEY: ",
+            secret=True,
         )
 
         # Only prompt for session token if using ASIA (temporary credentials)
         if key_type == "ASIA":
             aws_session_token = get_credential(
-                "AWS_SESSION_TOKEN", "Enter your AWS_SESSION_TOKEN: "
+                "AWS_SESSION_TOKEN",
+                "Enter your AWS_SESSION_TOKEN: ",
+                secret=True,
             )
             if not validate_session_token(key_type, aws_session_token):
                 logging.error(

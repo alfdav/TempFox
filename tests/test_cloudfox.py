@@ -42,3 +42,15 @@ def test_run_cloudfox_does_not_log_success_on_nonzero_exit(
 
     cloudfox.run_cloudfox_aws_all_checks("a", "b", "c")
     assert "completed successfully" not in caplog.text.lower()
+
+
+def test_run_cloudfox_handles_unexpected_exceptions(monkeypatch, caplog):
+    caplog.set_level(logging.ERROR)
+
+    def raise_unexpected(_env):
+        raise RuntimeError("unexpected boom")
+
+    monkeypatch.setattr(cloudfox, "get_aws_account_id", raise_unexpected)
+    result = cloudfox.run_cloudfox_aws_all_checks("a", "b", "c")
+    assert result is False
+    assert "unexpected error" in caplog.text.lower()

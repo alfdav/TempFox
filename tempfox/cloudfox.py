@@ -72,7 +72,7 @@ def cleanup_old_output_files() -> None:
 
 def run_cloudfox_aws_all_checks(
     aws_access_key_id: str, aws_secret_access_key: str, aws_session_token: str
-) -> None:
+) -> bool:
     """Run the 'cloudfox aws all-checks' command using the temporary credentials."""
     try:
         # Create a new environment with all current env variables plus AWS credentials
@@ -89,7 +89,7 @@ def run_cloudfox_aws_all_checks(
         account_id = get_aws_account_id(env)
         if not account_id:
             logging.error("Could not retrieve AWS account ID")
-            return
+            return False
 
         # Clean up old output files
         cleanup_old_output_files()
@@ -126,11 +126,20 @@ def run_cloudfox_aws_all_checks(
             with open(json_output, "w") as f:
                 json.dump({"raw_output": process.stdout}, f, indent=2)
 
+        if process.returncode != 0:
+            stderr = process.stderr.strip() if process.stderr else "no stderr output"
+            logging.error(
+                "CloudFox command failed with exit code %s: %s",
+                process.returncode,
+                stderr,
+            )
+            return False
+
         logging.info(
             f"CloudFox completed successfully. Results saved to {txt_output} "
             f"and {json_output}"
         )
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Error running 'cloudfox aws all-checks': {e}")
+        return True
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
+        return False

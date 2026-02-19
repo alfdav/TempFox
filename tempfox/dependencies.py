@@ -161,9 +161,17 @@ def check_aws_cli() -> bool:
         if process.returncode == 0:
             logging.info(f"AWS CLI is already installed: {process.stdout.strip()}")
             return True
-    except (subprocess.CalledProcessError, FileNotFoundError, Exception):
+        logging.error(
+            "AWS CLI check returned non-zero exit status: %s",
+            process.returncode,
+        )
+        return False
+    except FileNotFoundError:
         logging.info("AWS CLI is not installed. Installing now...")
         return install_aws_cli()
+    except Exception as e:
+        logging.error(f"Unexpected error checking AWS CLI: {e}")
+        return False
     return False
 
 

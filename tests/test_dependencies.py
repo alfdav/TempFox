@@ -43,10 +43,29 @@ def test_check_aws_cli_returns_true_when_installed(monkeypatch):
     assert dependencies.check_aws_cli() is True
 
 
-def test_check_aws_cli_installs_when_missing(monkeypatch):
+def test_check_aws_cli_installs_on_missing_binary(monkeypatch):
     monkeypatch.setattr(dependencies.shutil, "which", lambda cmd: None)
     monkeypatch.setattr(dependencies, "install_aws_cli", lambda: True)
     assert dependencies.check_aws_cli() is True
+
+
+def test_check_aws_cli_does_not_mask_unexpected_runtime_error(monkeypatch):
+    monkeypatch.setattr(dependencies.shutil, "which", lambda cmd: "/usr/bin/aws")
+
+    def raise_unexpected(*args, **kwargs):
+        raise RuntimeError("unexpected failure")
+
+    install_called = {"value": False}
+
+    def fake_install():
+        install_called["value"] = True
+        return True
+
+    monkeypatch.setattr(dependencies.subprocess, "run", raise_unexpected)
+    monkeypatch.setattr(dependencies, "install_aws_cli", fake_install)
+
+    assert dependencies.check_aws_cli() is False
+    assert install_called["value"] is False
 
 
 def test_check_go_installation_missing_binary(monkeypatch):

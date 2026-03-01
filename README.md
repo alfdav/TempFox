@@ -160,18 +160,23 @@ uv sync
 # Run in development mode
 uv run tempfox
 
-# Run tests
-uv run pytest
-# CI currently enforces a minimum 35% coverage threshold
-uv run pytest --cov=tempfox --cov-report=xml --cov-fail-under=35
+# Fast local quality gate
+make hygiene-fast
 
-# Format code
-uv run black .
-uv run isort .
+# Full gate (matches CI coverage threshold)
+make hygiene
 
-# Type checking
+# Safe autofix + full gate
+make hygiene-fix
+
+# Install git hooks (pre-commit + pre-push)
+uv run pre-commit install --hook-type pre-commit --hook-type pre-push
+
+# Type checking (standalone)
 uv run mypy tempfox/
 ```
+
+See `docs/codex-hygiene-runbook.md` and `AGENTS.md` for the cleanup/review workflow contract.
 
 ### Using Docker for Development
 ```bash

@@ -34,15 +34,13 @@ jobs:
       run: uv sync
     
     - name: Lint with ruff
-      run: |
-        uv run ruff check .
-        uv run ruff format --check .
+      run: make lint format-check
     
     - name: Type check with mypy
-      run: uv run mypy tempfox/
+      run: make typecheck
     
     - name: Test with pytest
-      run: uv run pytest --cov=tempfox --cov-report=xml --cov-fail-under=35
+      run: make coverage
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3

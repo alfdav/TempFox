@@ -1,0 +1,40 @@
+minimum_pre_commit_version: "3.0.0"
+default_install_hook_types: [pre-commit, pre-push]
+
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: ./scripts/run_tool.sh ruff check .
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: ruff-format-check
+        name: ruff format check
+        entry: ./scripts/run_tool.sh ruff format --check .
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: repo-scan
+        name: repository hygiene scan
+        entry: ./scripts/repo_hygiene_check.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit, pre-push]
+
+      - id: mypy
+        name: mypy
+        entry: ./scripts/run_tool.sh mypy tempfox/
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: pytest-coverage
+        name: pytest coverage gate
+        entry: ./scripts/run_tool.sh pytest --cov=tempfox --cov-report=xml --cov-fail-under=35
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

@@ -400,9 +400,13 @@ def main() -> None:
             logging.info("🦊 Running CloudFox Security Analysis")
             logging.info("=" * 60)
 
-            run_cloudfox_aws_all_checks(
+            cloudfox_success = run_cloudfox_aws_all_checks(
                 aws_access_key_id, aws_secret_access_key, aws_session_token
             )
+
+            if not cloudfox_success:
+                logging.error("CloudFox analysis failed. Exiting.")
+                sys.exit(1)
 
             # Final summary
             if profile_created and profile_config:

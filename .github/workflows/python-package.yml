@@ -42,7 +42,7 @@ jobs:
       run: uv run mypy tempfox/
     
     - name: Test with pytest
-      run: uv run pytest --cov=tempfox --cov-report=xml
+      run: uv run pytest --cov=tempfox --cov-report=xml --cov-fail-under=35
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3

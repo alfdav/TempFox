@@ -105,8 +105,26 @@ def test_main_exits_nonzero_when_aws_connection_fails(monkeypatch):
     monkeypatch.setattr(core, "check_aws_cli", lambda: True)
     monkeypatch.setattr(core, "check_access_key_type", lambda: "AKIA")
     creds = iter(["AKIAX", "SECRET"])
-    monkeypatch.setattr(core, "get_credential", lambda *_: next(creds))
+    monkeypatch.setattr(core, "get_credential", lambda *_, **__: next(creds))
     monkeypatch.setattr(core, "test_aws_connection", lambda *args: False)
+
+    with pytest.raises(SystemExit) as exc:
+        core.main()
+    assert exc.value.code == 1
+
+
+def test_main_exits_nonzero_when_cloudfox_analysis_fails(monkeypatch):
+    import tempfox.core as core
+
+    monkeypatch.setattr(
+        core.sys, "argv", ["tempfox", "--skip-preflight", "--no-profile"]
+    )
+    monkeypatch.setattr(core, "check_aws_cli", lambda: True)
+    monkeypatch.setattr(core, "check_access_key_type", lambda: "AKIA")
+    creds = iter(["AKIAX", "SECRET"])
+    monkeypatch.setattr(core, "get_credential", lambda *_, **__: next(creds))
+    monkeypatch.setattr(core, "test_aws_connection", lambda *args: True)
+    monkeypatch.setattr(core, "run_cloudfox_aws_all_checks", lambda *args: False)
 
     with pytest.raises(SystemExit) as exc:
         core.main()

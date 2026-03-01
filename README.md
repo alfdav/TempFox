@@ -162,6 +162,8 @@ uv run tempfox
 
 # Run tests
 uv run pytest
+# CI currently enforces a minimum 35% coverage threshold
+uv run pytest --cov=tempfox --cov-report=xml --cov-fail-under=35
 
 # Format code
 uv run black .

@@ -41,11 +41,10 @@ awscliv2.zip
 aws/
 
 # Test coverage
-.coverage
+.coverage*
 htmlcov/
 .tox/
 .nox/
-.coverage.*
 .cache
 nosetests.xml
 coverage.xml

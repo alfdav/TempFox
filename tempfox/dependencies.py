@@ -192,7 +192,7 @@ def check_go_installation() -> Tuple[bool, Optional[str]]:
         else:
             return False, None
 
-    except (subprocess.CalledProcessError, FileNotFoundError, Exception) as e:
+    except Exception as e:
         logging.debug(f"Go check failed: {e}")
         return False, None
 
@@ -281,7 +281,7 @@ def check_cloudfox_installation() -> Tuple[bool, Optional[str]]:
                 return True, "CloudFox (version unknown)"
             return False, None
 
-    except (subprocess.CalledProcessError, FileNotFoundError, Exception) as e:
+    except Exception as e:
         logging.debug(f"CloudFox check failed: {e}")
         return False, None
 
@@ -354,7 +354,7 @@ def check_uv_installation() -> Tuple[bool, Optional[str]]:
         else:
             return False, None
 
-    except (subprocess.CalledProcessError, FileNotFoundError, Exception) as e:
+    except Exception as e:
         logging.debug(f"UV check failed: {e}")
         return False, None
 

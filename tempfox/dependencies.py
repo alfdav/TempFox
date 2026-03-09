@@ -172,7 +172,6 @@ def check_aws_cli() -> bool:
     except Exception as e:
         logging.error(f"Unexpected error checking AWS CLI: {e}")
         return False
-    return False
 
 
 def check_go_installation() -> Tuple[bool, Optional[str]]:

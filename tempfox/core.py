@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""TempFox CLI orchestration and backward-compatible function exports."""
+"""TempFox CLI orchestration."""
 
 import argparse
 import atexit
@@ -17,50 +17,6 @@ import tempfox.cloudfox as cloudfox
 import tempfox.dependencies as dependencies
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-
-# Backward-compatible constant exports
-MAX_OUTPUT_FILES = cloudfox.MAX_OUTPUT_FILES
-EXPIRED_TOKEN_INDICATORS = cloudfox.EXPIRED_TOKEN_INDICATORS
-GO_DOWNLOAD_BASE_URL = dependencies.GO_DOWNLOAD_BASE_URL
-GO_INSTALL_DIR = dependencies.GO_INSTALL_DIR
-
-# Backward-compatible function exports (AWS profile/config helpers)
-get_aws_config_dir = aws_profiles.get_aws_config_dir
-get_aws_credentials_file = aws_profiles.get_aws_credentials_file
-get_aws_config_file = aws_profiles.get_aws_config_file
-ensure_aws_config_dir = aws_profiles.ensure_aws_config_dir
-read_aws_credentials = aws_profiles.read_aws_credentials
-read_aws_config = aws_profiles.read_aws_config
-write_aws_credentials = aws_profiles.write_aws_credentials
-write_aws_config = aws_profiles.write_aws_config
-list_aws_profiles = aws_profiles.list_aws_profiles
-get_tempfox_profiles = aws_profiles.get_tempfox_profiles
-profile_exists = aws_profiles.profile_exists
-create_aws_profile = aws_profiles.create_aws_profile
-delete_aws_profile = aws_profiles.delete_aws_profile
-generate_profile_name = aws_profiles.generate_profile_name
-get_aws_regions = aws_profiles.get_aws_regions
-prompt_for_profile_creation = aws_profiles.prompt_for_profile_creation
-
-# Backward-compatible function exports (dependency/preflight helpers)
-cleanup_temp_files = dependencies.cleanup_temp_files
-get_platform_info = dependencies.get_platform_info
-get_aws_cli_download_url = dependencies.get_aws_cli_download_url
-install_aws_cli = dependencies.install_aws_cli
-check_aws_cli = dependencies.check_aws_cli
-check_go_installation = dependencies.check_go_installation
-install_go = dependencies.install_go
-check_cloudfox_installation = dependencies.check_cloudfox_installation
-install_cloudfox = dependencies.install_cloudfox
-check_uv_installation = dependencies.check_uv_installation
-run_preflight_checks = dependencies.run_preflight_checks
-
-# Backward-compatible function exports (CloudFox helpers)
-check_token_expiration = cloudfox.check_token_expiration
-get_aws_cmd = cloudfox.get_aws_cmd
-get_aws_account_id = cloudfox.get_aws_account_id
-cleanup_old_output_files = cloudfox.cleanup_old_output_files
-run_cloudfox_aws_all_checks = cloudfox.run_cloudfox_aws_all_checks
 
 
 def get_credential(env_var: str, prompt_text: str, secret: bool = False) -> str:
@@ -100,7 +56,7 @@ def test_aws_connection(
 ) -> bool:
     """Test the AWS connection using the temporary credentials provided by the user."""
     try:
-        aws_cmd = get_aws_cmd()
+        aws_cmd = cloudfox.get_aws_cmd()
 
         # Prepare environment variables
         env = os.environ.copy()
@@ -124,7 +80,7 @@ def test_aws_connection(
         # Check for errors first
         if process.returncode != 0:
             error_message = process.stderr
-            if check_token_expiration(error_message):
+            if cloudfox.check_token_expiration(error_message):
                 logging.warning(
                     "AWS token has expired. Please obtain new temporary credentials."
                 )
@@ -154,8 +110,8 @@ def test_aws_connection(
 def cleanup_on_exit() -> None:
     """Cleanup function to be called when script exits."""
     try:
-        cleanup_temp_files()
-        cleanup_old_output_files()
+        dependencies.cleanup_temp_files()
+        cloudfox.cleanup_old_output_files()
     except Exception as e:
         logging.warning(f"Error during cleanup: {e}")
 
@@ -203,8 +159,8 @@ def main() -> None:
             logging.info("\n🦊 TempFox - AWS Profile Manager")
             logging.info("=" * 40 + "\n")
 
-            profiles = list_aws_profiles()
-            tempfox_profiles = get_tempfox_profiles()
+            profiles = aws_profiles.list_aws_profiles()
+            tempfox_profiles = aws_profiles.get_tempfox_profiles()
 
             if profiles:
                 logging.info(f"📋 Found {len(profiles)} AWS profiles:")
@@ -228,7 +184,7 @@ def main() -> None:
             logging.info("\n🦊 TempFox - Profile Cleanup")
             logging.info("=" * 40 + "\n")
 
-            tempfox_profiles = get_tempfox_profiles()
+            tempfox_profiles = aws_profiles.get_tempfox_profiles()
 
             if not tempfox_profiles:
                 logging.info("✅ No TempFox profiles found to clean up.")
@@ -247,7 +203,7 @@ def main() -> None:
             if confirm == "y":
                 deleted_count = 0
                 for profile in tempfox_profiles:
-                    if delete_aws_profile(profile):
+                    if aws_profiles.delete_aws_profile(profile):
                         logging.info(f"✅ Deleted profile: {profile}")
                         deleted_count += 1
                     else:
@@ -274,7 +230,7 @@ def main() -> None:
 
         # Run pre-flight checks unless skipped
         if not args.skip_preflight:
-            if not run_preflight_checks():
+            if not dependencies.run_preflight_checks():
                 logging.error(
                     "❌ Pre-flight checks failed. Use --skip-preflight to bypass "
                     "(not recommended)"
@@ -284,7 +240,7 @@ def main() -> None:
         else:
             logging.warning("⚠️  Skipping pre-flight checks as requested")
             # Still check AWS CLI as it's critical
-            if not check_aws_cli():
+            if not dependencies.check_aws_cli():
                 logging.error("Failed to verify or install AWS CLI")
                 sys.exit(1)
 
@@ -339,7 +295,7 @@ def main() -> None:
             # Offer profile creation after successful connection (unless disabled)
             profile_config = None
             if not args.no_profile:
-                profile_config = prompt_for_profile_creation(
+                profile_config = aws_profiles.prompt_for_profile_creation(
                     aws_access_key_id,
                     aws_secret_access_key,
                     aws_session_token,
@@ -354,7 +310,7 @@ def main() -> None:
                     f"\n📝 Creating AWS profile: {profile_config['profile_name']}"
                 )
 
-                success = create_aws_profile(
+                success = aws_profiles.create_aws_profile(
                     profile_config["profile_name"] or "tempfox-default",
                     aws_access_key_id,
                     aws_secret_access_key,
@@ -400,7 +356,7 @@ def main() -> None:
             logging.info("🦊 Running CloudFox Security Analysis")
             logging.info("=" * 60)
 
-            cloudfox_success = run_cloudfox_aws_all_checks(
+            cloudfox_success = cloudfox.run_cloudfox_aws_all_checks(
                 aws_access_key_id, aws_secret_access_key, aws_session_token
             )
 

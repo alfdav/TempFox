@@ -11,6 +11,8 @@ import logging
 import os
 import subprocess
 import sys
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional
 
 import tempfox.aws_profiles as aws_profiles
 import tempfox.cloudfox as cloudfox
@@ -19,17 +21,31 @@ import tempfox.dependencies as dependencies
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 
-def get_credential(env_var: str, prompt_text: str, secret: bool = False) -> str:
+def get_credential(
+    env_var: str,
+    prompt_text: str,
+    secret: bool = False,
+    *,
+    _environ: Optional[Dict[str, str]] = None,
+    _input: Optional[Callable[[str], str]] = None,
+    _getpass: Optional[Callable[[str], str]] = None,
+) -> str:
     """Check for existing credential and prompt user to use it or enter new one."""
-    existing_value = os.environ.get(env_var)
+    input_fn = _input or input
+    getpass_fn = _getpass or getpass.getpass
+    existing_value = (
+        _environ.get(env_var) if _environ is not None else os.environ.get(env_var)
+    )
     if existing_value:
         logging.info(f"Found existing {env_var} in environment variables.")
-        use_existing = input(f"Would you like to use the existing {env_var}? (y/n): ")
+        use_existing = input_fn(
+            f"Would you like to use the existing {env_var}? (y/n): "
+        )
         if use_existing.lower() == "y":
             return existing_value
     if secret:
-        return getpass.getpass(prompt_text)
-    return input(prompt_text)
+        return getpass_fn(prompt_text)
+    return input_fn(prompt_text)
 
 
 def check_access_key_type() -> str:
@@ -52,11 +68,20 @@ def validate_session_token(key_type: str, aws_session_token: str) -> bool:
 
 
 def test_aws_connection(
-    aws_access_key_id: str, aws_secret_access_key: str, aws_session_token: str
+    aws_access_key_id: str,
+    aws_secret_access_key: str,
+    aws_session_token: str,
+    *,
+    _get_aws_cmd: Optional[Callable[[], str]] = None,
+    _run_cmd: Optional[Callable[..., Any]] = None,
+    _check_expiration: Optional[Callable[[str], bool]] = None,
 ) -> bool:
     """Test the AWS connection using the temporary credentials provided by the user."""
+    get_aws_cmd = _get_aws_cmd or cloudfox.get_aws_cmd
+    run_cmd = _run_cmd or subprocess.run
+    check_expiration = _check_expiration or cloudfox.check_token_expiration
     try:
-        aws_cmd = cloudfox.get_aws_cmd()
+        aws_cmd = get_aws_cmd()
 
         # Prepare environment variables
         env = os.environ.copy()
@@ -69,7 +94,7 @@ def test_aws_connection(
         )
 
         # Capture the output and error messages
-        process = subprocess.run(
+        process = run_cmd(
             [aws_cmd, "sts", "get-caller-identity", "--output", "json"],
             env=env,
             capture_output=True,
@@ -80,7 +105,7 @@ def test_aws_connection(
         # Check for errors first
         if process.returncode != 0:
             error_message = process.stderr
-            if cloudfox.check_token_expiration(error_message):
+            if check_expiration(error_message):
                 logging.warning(
                     "AWS token has expired. Please obtain new temporary credentials."
                 )
@@ -124,8 +149,31 @@ def get_version() -> str:
         return "1.0.0"  # Fallback version
 
 
-def main() -> None:
+@dataclass
+class MainDeps:
+    """Injectable dependencies for the main workflow."""
+
+    run_preflight_checks: Callable[[], bool] = dependencies.run_preflight_checks
+    check_aws_cli: Callable[[], bool] = dependencies.check_aws_cli
+    list_aws_profiles: Callable[[], List[str]] = aws_profiles.list_aws_profiles
+    get_tempfox_profiles: Callable[[], List[str]] = aws_profiles.get_tempfox_profiles
+    delete_aws_profile: Callable[[str], bool] = aws_profiles.delete_aws_profile
+    prompt_for_profile_creation: Callable[..., Any] = (
+        aws_profiles.prompt_for_profile_creation
+    )
+    create_aws_profile: Callable[..., bool] = aws_profiles.create_aws_profile
+    run_cloudfox_aws_all_checks: Callable[..., bool] = (
+        cloudfox.run_cloudfox_aws_all_checks
+    )
+    check_access_key_type: Callable[[], str] = check_access_key_type
+    get_credential: Callable[..., str] = get_credential
+    validate_session_token: Callable[[str, str], bool] = validate_session_token
+    test_aws_connection: Callable[..., bool] = test_aws_connection
+
+
+def main(argv: Optional[List[str]] = None, *, _deps: Optional[MainDeps] = None) -> None:
     """Main function to run TempFox."""
+    deps = _deps or MainDeps()
     try:
         # Parse command line arguments
         parser = argparse.ArgumentParser(
@@ -152,15 +200,15 @@ def main() -> None:
         parser.add_argument(
             "--no-profile", action="store_true", help="Skip profile creation prompts"
         )
-        args = parser.parse_args()
+        args = parser.parse_args(argv)
 
         # Handle profile management commands
         if args.list_profiles:
             logging.info("\n🦊 TempFox - AWS Profile Manager")
             logging.info("=" * 40 + "\n")
 
-            profiles = aws_profiles.list_aws_profiles()
-            tempfox_profiles = aws_profiles.get_tempfox_profiles()
+            profiles = deps.list_aws_profiles()
+            tempfox_profiles = deps.get_tempfox_profiles()
 
             if profiles:
                 logging.info(f"📋 Found {len(profiles)} AWS profiles:")
@@ -184,7 +232,7 @@ def main() -> None:
             logging.info("\n🦊 TempFox - Profile Cleanup")
             logging.info("=" * 40 + "\n")
 
-            tempfox_profiles = aws_profiles.get_tempfox_profiles()
+            tempfox_profiles = deps.get_tempfox_profiles()
 
             if not tempfox_profiles:
                 logging.info("✅ No TempFox profiles found to clean up.")
@@ -203,7 +251,7 @@ def main() -> None:
             if confirm == "y":
                 deleted_count = 0
                 for profile in tempfox_profiles:
-                    if aws_profiles.delete_aws_profile(profile):
+                    if deps.delete_aws_profile(profile):
                         logging.info(f"✅ Deleted profile: {profile}")
                         deleted_count += 1
                     else:
@@ -230,7 +278,7 @@ def main() -> None:
 
         # Run pre-flight checks unless skipped
         if not args.skip_preflight:
-            if not dependencies.run_preflight_checks():
+            if not deps.run_preflight_checks():
                 logging.error(
                     "❌ Pre-flight checks failed. Use --skip-preflight to bypass "
                     "(not recommended)"
@@ -240,15 +288,15 @@ def main() -> None:
         else:
             logging.warning("⚠️  Skipping pre-flight checks as requested")
             # Still check AWS CLI as it's critical
-            if not dependencies.check_aws_cli():
+            if not deps.check_aws_cli():
                 logging.error("Failed to verify or install AWS CLI")
                 sys.exit(1)
 
         # Check access key type
-        key_type = check_access_key_type()
+        key_type = deps.check_access_key_type()
 
         # Get AWS credentials with individual checks
-        aws_access_key_id = get_credential(
+        aws_access_key_id = deps.get_credential(
             "AWS_ACCESS_KEY_ID", "Enter your AWS_ACCESS_KEY_ID: "
         )
 
@@ -263,7 +311,7 @@ def main() -> None:
                 logging.info("Exiting script.")
                 sys.exit(1)
 
-        aws_secret_access_key = get_credential(
+        aws_secret_access_key = deps.get_credential(
             "AWS_SECRET_ACCESS_KEY",
             "Enter your AWS_SECRET_ACCESS_KEY: ",
             secret=True,
@@ -271,12 +319,12 @@ def main() -> None:
 
         # Only prompt for session token if using ASIA (temporary credentials)
         if key_type == "ASIA":
-            aws_session_token = get_credential(
+            aws_session_token = deps.get_credential(
                 "AWS_SESSION_TOKEN",
                 "Enter your AWS_SESSION_TOKEN: ",
                 secret=True,
             )
-            if not validate_session_token(key_type, aws_session_token):
+            if not deps.validate_session_token(key_type, aws_session_token):
                 logging.error(
                     "AWS_SESSION_TOKEN is required when using ASIA temporary "
                     "credentials."
@@ -289,13 +337,13 @@ def main() -> None:
             )
 
         # Test AWS connection
-        if test_aws_connection(
+        if deps.test_aws_connection(
             aws_access_key_id, aws_secret_access_key, aws_session_token
         ):
             # Offer profile creation after successful connection (unless disabled)
             profile_config = None
             if not args.no_profile:
-                profile_config = aws_profiles.prompt_for_profile_creation(
+                profile_config = deps.prompt_for_profile_creation(
                     aws_access_key_id,
                     aws_secret_access_key,
                     aws_session_token,
@@ -310,7 +358,7 @@ def main() -> None:
                     f"\n📝 Creating AWS profile: {profile_config['profile_name']}"
                 )
 
-                success = aws_profiles.create_aws_profile(
+                success = deps.create_aws_profile(
                     profile_config["profile_name"] or "tempfox-default",
                     aws_access_key_id,
                     aws_secret_access_key,
@@ -356,7 +404,7 @@ def main() -> None:
             logging.info("🦊 Running CloudFox Security Analysis")
             logging.info("=" * 60)
 
-            cloudfox_success = cloudfox.run_cloudfox_aws_all_checks(
+            cloudfox_success = deps.run_cloudfox_aws_all_checks(
                 aws_access_key_id, aws_secret_access_key, aws_session_token
             )
 

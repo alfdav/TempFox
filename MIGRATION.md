@@ -23,25 +23,23 @@ This guide helps you migrate from the traditional pip-based setup to the new UV 
 
 ### For End Users
 
-#### Option 1: Use UV (Recommended)
+#### Option 1: Use UV
 ```bash
 # Install UV
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install TempFox
 uv tool install tempfox
+
+# Remove TempFox
+uv tool uninstall tempfox
 ```
 
-#### Option 2: Use Installation Scripts
-```bash
-# Unix/Linux/macOS
-curl -sSL https://raw.githubusercontent.com/alfdav/tempfox/main/install.sh | bash
+`pip install tempfox` still works as a one-line alternative. Do not use the retired `install.sh` / `install.ps1` scripts.
 
-# Windows PowerShell
-iwr https://raw.githubusercontent.com/alfdav/tempfox/main/install.ps1 | iex
-```
+If an older clone left a script-based install behind, remove `~/.local/share/tempfox` and `~/.local/bin/tempfox` (Unix) or `%LOCALAPPDATA%\tempfox` (Windows), then drop any PATH lines those scripts added.
 
-#### Option 3: Use Docker
+#### Option 2: Use Docker
 ```bash
 docker run --rm -it \
   -e AWS_ACCESS_KEY_ID=your_key \
@@ -143,14 +141,13 @@ uv add --dev "pytest>=7.0.0"
 ### Removed Files
 - `requirements.txt` - Replaced by dependencies in pyproject.toml
 - `setup.py` - Replaced by modern pyproject.toml configuration
+- `install.sh` / `install.ps1` / `uninstall.sh` / `uninstall.ps1` - Replaced by `uv tool install tempfox` and `uv tool uninstall tempfox`
 
 ### New Files
 - `Dockerfile` - Production container
 - `Dockerfile.dev` - Development container
 - `docker-compose.yml` - Development orchestration
 - `.dockerignore` - Docker build optimization
-- `install.sh` / `install.ps1` - Cross-platform installation scripts
-- `uninstall.sh` / `uninstall.ps1` - Clean uninstallation scripts
 
 ### Modified Files
 - `pyproject.toml` - Updated with UV configuration and modern packaging

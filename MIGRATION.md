@@ -56,18 +56,15 @@ The retired scripts persisted Go, CloudFox, and UV on your shell PATH. UV only p
 
 #### Option 2: Use Docker
 ```bash
-docker run --rm -it \
-  -e AWS_ACCESS_KEY_ID=your_key \
-  -e AWS_SECRET_ACCESS_KEY=your_secret \
-  ghcr.io/alfdav/tempfox:latest
+docker run --rm -it ghcr.io/alfdav/tempfox:latest
 ```
 
 ### For Developers
 
 #### Old Development Setup
 ```bash
-git clone https://github.com/alfdav/tempfox.git
-cd tempfox
+git clone https://github.com/alfdav/TempFox.git
+cd TempFox
 python -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -r requirements.txt
@@ -76,16 +73,16 @@ pip install -e .
 
 #### New Development Setup with UV
 ```bash
-git clone https://github.com/alfdav/tempfox.git
-cd tempfox
+git clone https://github.com/alfdav/TempFox.git
+cd TempFox
 uv sync
 uv run tempfox
 ```
 
 #### New Development Setup with Docker
 ```bash
-git clone https://github.com/alfdav/tempfox.git
-cd tempfox
+git clone https://github.com/alfdav/TempFox.git
+cd TempFox
 docker-compose run tempfox-dev
 ```
 
@@ -186,22 +183,16 @@ If Docker commands fail:
 3. Try with `sudo` if necessary
 
 ### Python Version Issues
-If you're using Python < 3.8:
-1. Upgrade to Python 3.8 or higher
-2. Use the legacy pip installation method temporarily
-3. Consider using Docker for consistent environment
+TempFox needs Python 3.8 or higher. Upgrade, or use the Docker image.
 
-## Rollback Plan
+## Rollback
 
-If you need to rollback to the old system:
-1. Uninstall UV version: `uv tool uninstall tempfox`
-2. Install via pip: `pip install tempfox`
-3. Use the previous development setup with virtual environments
+`pip install tempfox` still works as a one-liner. It is not a second supported installer.
 
 ## Support
 
 For issues with the migration:
-1. Check the [GitHub Issues](https://github.com/alfdav/tempfox/issues)
+1. Check the [GitHub Issues](https://github.com/alfdav/TempFox/issues)
 2. Review the updated [README.md](README.md)
 3. Try the Docker option for a clean environment
 4. Create a new issue with migration details if problems persist

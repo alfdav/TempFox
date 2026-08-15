@@ -29,9 +29,9 @@ classifiers = [
 requires-python = ">=3.8"
 
 [project.urls]
-Homepage = "https://github.com/alfdav/tempfox"
-Repository = "https://github.com/alfdav/tempfox"
-Issues = "https://github.com/alfdav/tempfox/issues"
+Homepage = "https://github.com/alfdav/TempFox"
+Repository = "https://github.com/alfdav/TempFox"
+Issues = "https://github.com/alfdav/TempFox/issues"
 
 [project.scripts]
 tempfox = "tempfox.__main__:main"

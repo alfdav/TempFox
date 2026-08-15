@@ -11,7 +11,7 @@ Goal: make AKIA/ASIA flows predictable and safe under failure.
 
 Done criteria:
 - ASIA flow validates missing/empty session token with clear remediation guidance.
-- Expired-token handling does not recurse into `main()`; uses a controlled retry/exit flow.
+- Expired-token handling does not recurse into `main()`; expired tokens exit. There is no renewal.
 - Error messages distinguish auth errors vs tool/runtime errors.
 - Tests cover AKIA happy path, ASIA happy path, missing token, and expired token branches.
 

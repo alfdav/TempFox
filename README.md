@@ -1,236 +1,71 @@
-# 🦊 TempFox
+# TempFox
 
 [![PyPI version](https://badge.fury.io/py/tempfox.svg)](https://badge.fury.io/py/tempfox)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-## Description
+Python CLI that holds AWS credentials (AKIA long-term or ASIA temporary) and runs CloudFox checks.
 
-TempFox is a streamlined Python tool that manages AWS credentials and automates CloudFox security checks. It elegantly handles both long-term (AKIA) and temporary (ASIA) AWS credentials.
+Python 3.8+. No third-party runtime dependencies.
 
-```bash
-  _____                   _____ 
- |_   _|__ _ __ ___  _ _|  ___|____  __
-   | |/ _ \ '_ ` _ \| '_ \ |_ / _ \ \/ /
-   | |  __/ | | | | | |_) |  _| (_) >  < 
-   |_|\___|_| |_| |_| .__/|_|  \___/_/\_\
-                     |_|                   
-```
-
-## Key Features
-
-- 🚀 **Comprehensive Pre-flight Checks**: Automatic verification and installation of all dependencies
-- 🔄 Automatic AWS CLI installation and version detection
-- 🐹 **Go Binary Management**: Automatic Go installation and configuration
-- 🦊 **CloudFox Integration**: Automatic CloudFox installation and seamless security checks
-- 🔑 Support for both AKIA (long-term) & ASIA (temporary) credentials
-- ⏰ Token expiration handling with auto-renewal option
-- ✅ Smart credential format validation and verification
-- 🔍 Environment variable detection and reuse
-- 🧪 AWS connection testing with detailed identity information
-- 🛡️ Cross-platform dependency management (Windows, macOS, Linux)
-
-## Installation
-
-Install TempFox with UV.
+## Install
 
 ```bash
-# Install UV if needed (Unix/Linux/macOS)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install UV if needed (Windows PowerShell)
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-# Install TempFox
 uv tool install tempfox
 ```
-
-From source:
-
-```bash
-git clone https://github.com/alfdav/tempfox.git
-cd tempfox
-uv sync
-uv run tempfox
-```
-
-`pip install tempfox` still works as a one-line alternative. It is not a second supported installer.
-
-The retired install scripts used to write Go, CloudFox, and UV onto your shell PATH. UV only puts `tempfox` on PATH. First-run preflight still installs AWS CLI, Go, and CloudFox and updates PATH for the current TempFox process only. If you want `go` or `cloudfox` in other shells, add `~/.local/go/bin` and `~/go/bin` yourself (or the Windows equivalents).
-
-### Uninstall
 
 ```bash
 uv tool uninstall tempfox
 ```
 
-If you previously used the retired `install.sh` / `install.ps1` scripts, remove the leftover venv (`~/.local/share/tempfox` on Unix, `%LOCALAPPDATA%\tempfox` on Windows) and any PATH lines those scripts added. Do that before `uv tool install`, or only after `uv tool uninstall`. Do not delete `~/.local/bin/tempfox` while a UV install is active; that path is the UV shim.
+Install [UV](https://docs.astral.sh/uv/) first if you do not have it. `pip install tempfox` works as a one-liner; it is not a second supported installer.
 
-### Using Docker
+From source:
+
 ```bash
-# Pull and run
-docker run --rm -it \
-  -e AWS_ACCESS_KEY_ID=your_key \
-  -e AWS_SECRET_ACCESS_KEY=your_secret \
-  ghcr.io/alfdav/tempfox:latest
-
-# Or build locally
-git clone https://github.com/alfdav/tempfox.git
-cd tempfox
-docker build -t tempfox .
-docker run --rm -it tempfox
+git clone https://github.com/alfdav/TempFox.git
+cd TempFox
+uv sync
+uv run tempfox
 ```
 
-### Dependencies
+First run installs AWS CLI, Go, and CloudFox if they are missing. PATH updates apply to the current TempFox process only. To use `go` or `cloudfox` in other shells, add `~/.local/go/bin` and `~/go/bin` (or the Windows equivalents).
 
-TempFox automatically manages all its dependencies through comprehensive pre-flight checks:
+If you used the old `install.sh` / `install.ps1` scripts, remove the leftover venv (`~/.local/share/tempfox` on Unix, `%LOCALAPPDATA%\tempfox` on Windows) and any PATH lines those scripts added. Do that before `uv tool install`, or only after `uv tool uninstall`. Do not delete `~/.local/bin/tempfox` while a UV install is active.
 
-**Automatically Installed on first run (preflight):**
-- AWS CLI (if missing)
-- Go binary (if missing)
-- CloudFox security tool (if missing)
+Docker:
 
-**Required:**
-- Python 3.8+
-- Internet connection for downloads
-- UV (for the supported install path)
+```bash
+docker run --rm -it ghcr.io/alfdav/tempfox:latest
+```
 
-**Python Dependencies:**
-- No required third-party runtime Python dependencies
-
-## Quick Start
-
-### First Run - Automatic Setup
-On your first run, TempFox will automatically perform pre-flight checks and install any missing dependencies:
+## Usage
 
 ```bash
 tempfox
 ```
 
-This will:
-1. Verify Python
-2. Install AWS CLI if missing
-3. Install Go if missing
-4. Install CloudFox if missing
-5. Launch TempFox
+Set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` first if you already have them. ASIA keys also need `AWS_SESSION_TOKEN`. TempFox prompts for anything missing, checks `sts get-caller-identity`, then runs CloudFox. Expired tokens exit; there is no renewal.
 
-### Using with AWS Credentials
+Flags:
 
-**Long-term credentials (AKIA):**
-```bash
-export AWS_ACCESS_KEY_ID=AKIAXXXXXXXXXXXXXXXX
-export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-tempfox
-```
-
-**Temporary credentials (ASIA):**
-```bash
-export AWS_ACCESS_KEY_ID=ASIAXXXXXXXXXXXXXXXX
-export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-export AWS_SESSION_TOKEN=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-tempfox
-```
-
-### Advanced Options
-
-**Skip pre-flight checks (not recommended):**
-```bash
-tempfox --skip-preflight
-```
-
-**Check version:**
-```bash
-tempfox --version
-```
+- `--skip-preflight` — skip installing Go and CloudFox (AWS CLI is still checked)
+- `--version` / `-v`
+- `--list-profiles` — list AWS profiles and exit
+- `--cleanup-profiles` — delete TempFox-created profiles and exit
+- `--no-profile` — skip the prompt to save credentials as an AWS profile
 
 ## Development
 
-### Using UV (Recommended)
 ```bash
-# Clone the repository
-git clone https://github.com/alfdav/tempfox.git
-cd tempfox
-
-# Install dependencies
-uv sync
-
-# Run in development mode
-uv run tempfox
-
-# Fast local quality gate
 make hygiene-fast
-
-# Full gate (matches CI coverage threshold)
 make hygiene
-
-# CI also uploads coverage.xml from the 3.11 job via codecov-action.
-# Upload is best-effort: the job does not fail if CODECOV_TOKEN is unset.
-
-# Safe autofix + full gate
-make hygiene-fix
-
-# Install git hooks (pre-commit + pre-push)
-uv run pre-commit install --hook-type pre-commit --hook-type pre-push
-
-# Type checking (standalone)
-uv run mypy tempfox/
 ```
 
-See `docs/codex-hygiene-runbook.md` and `AGENTS.md` for the cleanup/review workflow contract.
-
-### Using Docker for Development
-```bash
-# Build development image
-docker build -f Dockerfile.dev -t tempfox-dev .
-
-# Run development container
-docker run --rm -it \
-  -v $(pwd):/app \
-  -v ~/.aws:/home/tempfox/.aws:ro \
-  tempfox-dev
-
-# Or use docker-compose
-docker-compose run tempfox-dev
-```
-
-## Prerequisites
-
-- Python 3.8 or higher
-- Linux/macOS/Windows operating system
-- Internet connection
-- UV package manager
+See `AGENTS.md` for the cleanup/review contract.
 
 ## License
 
-MIT License. The same terms are in `LICENSE`.
+MIT. See `LICENSE`. Copyright (c) 2024 David Diaz.
 
-Copyright (c) 2024 David Diaz
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-## Disclaimer
-
-THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER, AUTHORS, OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-USE OF THIS SOFTWARE IS ENTIRELY AT YOUR OWN RISK. THE AUTHORS ASSUME NO RESPONSIBILITY OR LIABILITY FOR ANY ERRORS OR OMISSIONS IN THE CONTENT OF THIS SOFTWARE. THE INFORMATION CONTAINED IN THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS WITH NO GUARANTEES OF COMPLETENESS, ACCURACY, USEFULNESS OR TIMELINESS.
-
-By using this software, you acknowledge and agree that you are using it at your own risk and discretion. The authors shall not be held responsible for any security breaches, data loss, or any other damages resulting from the use of this software.
-
----
-Made with ❤️ by David
+Use at your own risk. You are responsible for any AWS credentials you enter.

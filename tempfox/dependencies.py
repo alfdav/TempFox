@@ -8,30 +8,29 @@ import subprocess
 import tarfile
 import urllib.request
 import zipfile
-from typing import Optional, Tuple
+from typing import Optional, Set, Tuple
 
 GO_DOWNLOAD_BASE_URL = "https://go.dev/dl/"
 GO_INSTALL_DIR = os.path.expanduser("~/.local/go")
 
+# Installer leftovers created by this process. Never delete cwd names we did not create.
+_installer_artifacts: Set[str] = set()
+
+
+def register_installer_artifact(path: str) -> None:
+    """Record an installer leftover created by TempFox for later cleanup."""
+    _installer_artifacts.add(os.path.abspath(path))
+
 
 def cleanup_temp_files() -> None:
-    """Clean up temporary files from installations."""
+    """Clean up installer leftovers that TempFox created in this process."""
     try:
-        # AWS CLI temp files
-        temp_files = [
-            "awscliv2.zip",
-            "AWSCLIV2.pkg",
-            "AWSCLIV2.msi",
-            "AWSCLIV2-arm64.pkg",
-            "AWSCLIV2-arm64.msi",
-        ]
-        for temp_file in temp_files:
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
-
-        # AWS installer directory
-        if os.path.exists("aws"):
-            shutil.rmtree("aws")
+        for path in list(_installer_artifacts):
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            elif os.path.isfile(path):
+                os.remove(path)
+            _installer_artifacts.discard(path)
 
     except Exception as e:
         logging.warning(f"Error cleaning up temporary files: {e}")
@@ -92,14 +91,13 @@ def install_aws_cli() -> bool:
             subprocess.run(
                 ["curl", "-o", pkg_file, download_url], check=True, timeout=300
             )
+            if os.path.exists(pkg_file):
+                register_installer_artifact(pkg_file)
 
             # Install using installer
             subprocess.run(
                 ["sudo", "installer", "-pkg", pkg_file, "-target", "/"], check=True
             )
-
-            # Cleanup
-            os.remove(pkg_file)
 
         elif system == "linux":
             # Download ZIP file
@@ -107,17 +105,17 @@ def install_aws_cli() -> bool:
             subprocess.run(
                 ["curl", "-o", zip_file, download_url], check=True, timeout=300
             )
+            if os.path.exists(zip_file):
+                register_installer_artifact(zip_file)
 
             # Unzip the installer
+            aws_dir_existed = os.path.exists("aws")
             subprocess.run(["unzip", "-o", zip_file], check=True)
+            if os.path.exists("aws") and not aws_dir_existed:
+                register_installer_artifact("aws")
 
             # Install AWS CLI
             subprocess.run(["sudo", "./aws/install"], check=True)
-
-            # Cleanup
-            os.remove(zip_file)
-            if os.path.exists("aws"):
-                shutil.rmtree("aws")
 
         elif system == "windows":
             # Download MSI file
@@ -125,12 +123,11 @@ def install_aws_cli() -> bool:
             subprocess.run(
                 ["curl", "-o", msi_file, download_url], check=True, timeout=300
             )
+            if os.path.exists(msi_file):
+                register_installer_artifact(msi_file)
 
             # Install using msiexec
             subprocess.run(["msiexec", "/i", msi_file, "/quiet"], check=True)
-
-            # Cleanup
-            os.remove(msi_file)
 
         logging.info("✅ AWS CLI installed successfully")
         return True

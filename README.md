@@ -166,6 +166,9 @@ make hygiene-fast
 # Full gate (matches CI coverage threshold)
 make hygiene
 
+# CI also uploads coverage.xml from the 3.11 job via codecov-action.
+# Upload is best-effort: the job does not fail if CODECOV_TOKEN is unset.
+
 # Safe autofix + full gate
 make hygiene-fix
 
@@ -202,7 +205,7 @@ docker-compose run tempfox-dev
 
 ## License
 
-MIT License
+MIT License. The same terms are in `LICENSE`.
 
 Copyright (c) 2024 David Diaz
 

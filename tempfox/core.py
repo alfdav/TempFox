@@ -104,13 +104,12 @@ def test_aws_connection(
 
         # Prepare environment variables
         env = os.environ.copy()
-        env.update(
-            {
-                "AWS_ACCESS_KEY_ID": aws_access_key_id,
-                "AWS_SECRET_ACCESS_KEY": aws_secret_access_key,
-                "AWS_SESSION_TOKEN": aws_session_token,
-            }
-        )
+        env["AWS_ACCESS_KEY_ID"] = aws_access_key_id
+        env["AWS_SECRET_ACCESS_KEY"] = aws_secret_access_key
+        if aws_session_token:
+            env["AWS_SESSION_TOKEN"] = aws_session_token
+        else:
+            env.pop("AWS_SESSION_TOKEN", None)
 
         # Capture the output and error messages
         process = subprocess.run(
@@ -293,7 +292,7 @@ def main() -> None:
 
         # Get AWS credentials with individual checks
         aws_access_key_id = get_credential(
-            "AWS_ACCESS_KEY_ID", "Enter your AWS_ACCESS_KEY_ID: "
+            "AWS_ACCESS_KEY_ID", "Enter your AWS_ACCESS_KEY_ID: ", secret=True
         )
 
         # Validate access key format

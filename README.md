@@ -56,13 +56,15 @@ uv run tempfox
 
 `pip install tempfox` still works as a one-line alternative. It is not a second supported installer.
 
+The retired install scripts used to write Go, CloudFox, and UV onto your shell PATH. UV only puts `tempfox` on PATH. First-run preflight still installs AWS CLI, Go, and CloudFox and updates PATH for the current TempFox process only. If you want `go` or `cloudfox` in other shells, add `~/.local/go/bin` and `~/go/bin` yourself (or the Windows equivalents).
+
 ### Uninstall
 
 ```bash
 uv tool uninstall tempfox
 ```
 
-If you previously used the retired `install.sh` / `install.ps1` scripts, also remove the leftover venv and wrapper (`~/.local/share/tempfox` and `~/.local/bin/tempfox` on Unix, `%LOCALAPPDATA%\tempfox` on Windows) and any PATH lines those scripts added.
+If you previously used the retired `install.sh` / `install.ps1` scripts, remove the leftover venv (`~/.local/share/tempfox` on Unix, `%LOCALAPPDATA%\tempfox` on Windows) and any PATH lines those scripts added. Do that before `uv tool install`, or only after `uv tool uninstall`. Do not delete `~/.local/bin/tempfox` while a UV install is active; that path is the UV shim.
 
 ### Using Docker
 ```bash

@@ -26,7 +26,7 @@ TempFox is a CLI tool that:
 - Writes AWS credentials/config under `~/.aws` with `0600` permissions.
 - Keeps only a bounded number of CloudFox output files.
 - Allows listing and cleanup of TempFox-generated profiles via CLI flags.
-- Uses subprocess-based integration with local toolchain (`aws`, `go`, `cloudfox`, `uv`).
+- Uses subprocess-based integration with local toolchain (`aws`, `go`, `cloudfox`). UV is the supported package install path, not a runtime requirement.
 
 ## Priority Improvement Areas (Still Relevant)
 

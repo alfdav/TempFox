@@ -210,11 +210,9 @@ def delete_aws_profile(profile_name: str) -> bool:
         if config_config.has_section(config_section):
             config_config.remove_section(config_section)
 
-        # Write updated configurations
-        write_aws_credentials(credentials_config)
-        write_aws_config(config_config)
-
-        return True
+        credentials_written = write_aws_credentials(credentials_config)
+        config_written = write_aws_config(config_config)
+        return credentials_written and config_written
 
     except Exception as e:
         logging.error(f"Error deleting AWS profile '{profile_name}': {e}")

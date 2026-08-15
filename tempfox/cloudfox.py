@@ -77,13 +77,12 @@ def run_cloudfox_aws_all_checks(
     try:
         # Create a new environment with all current env variables plus AWS credentials
         env = os.environ.copy()
-        env.update(
-            {
-                "AWS_ACCESS_KEY_ID": aws_access_key_id,
-                "AWS_SECRET_ACCESS_KEY": aws_secret_access_key,
-                "AWS_SESSION_TOKEN": aws_session_token,
-            }
-        )
+        env["AWS_ACCESS_KEY_ID"] = aws_access_key_id
+        env["AWS_SECRET_ACCESS_KEY"] = aws_secret_access_key
+        if aws_session_token:
+            env["AWS_SESSION_TOKEN"] = aws_session_token
+        else:
+            env.pop("AWS_SESSION_TOKEN", None)
 
         # Get AWS account ID
         account_id = get_aws_account_id(env)
@@ -127,6 +126,13 @@ def run_cloudfox_aws_all_checks(
                 json.dump({"raw_output": process.stdout}, f, indent=2)
 
         if process.returncode != 0:
+            error_message = process.stderr or ""
+            if check_token_expiration(error_message):
+                logging.warning(
+                    "AWS token has expired. Please obtain new temporary credentials."
+                )
+                logging.info("Exiting script.")
+                return False
             stderr = process.stderr.strip() if process.stderr else "no stderr output"
             logging.error(
                 "CloudFox command failed with exit code %s: %s",

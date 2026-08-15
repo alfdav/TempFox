@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from tempfox import dependencies
+from tempfox import core, dependencies
 
 
 def test_platform_info_returns_strings():
@@ -111,6 +111,60 @@ def test_run_preflight_checks_success(monkeypatch):
         lambda *args, **kwargs: SimpleNamespace(returncode=0),
     )
     assert dependencies.run_preflight_checks() is True
+
+
+def test_cleanup_temp_files_preserves_unrelated_cwd_aws_and_installer_names(
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    aws_dir = tmp_path / "aws"
+    aws_dir.mkdir()
+    marker = aws_dir / "package.py"
+    marker.write_text("keep me")
+    leftover_zip = tmp_path / "awscliv2.zip"
+    leftover_zip.write_text("not ours")
+    leftover_pkg = tmp_path / "AWSCLIV2.pkg"
+    leftover_pkg.write_text("not ours")
+
+    dependencies.cleanup_temp_files()
+
+    assert marker.exists()
+    assert leftover_zip.exists()
+    assert leftover_pkg.exists()
+
+
+def test_cleanup_temp_files_removes_only_registered_installer_artifacts(
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    created_zip = tmp_path / "awscliv2.zip"
+    created_zip.write_text("tempfox created")
+    created_dir = tmp_path / "aws"
+    created_dir.mkdir()
+    (created_dir / "install").write_text("installer")
+    unrelated = tmp_path / "AWSCLIV2.pkg"
+    unrelated.write_text("operator file")
+
+    dependencies.register_installer_artifact(str(created_zip))
+    dependencies.register_installer_artifact(str(created_dir))
+    dependencies.cleanup_temp_files()
+
+    assert not created_zip.exists()
+    assert not created_dir.exists()
+    assert unrelated.exists()
+
+
+def test_cleanup_on_exit_does_not_delete_unrelated_cwd_aws(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    aws_dir = tmp_path / "aws"
+    aws_dir.mkdir()
+    marker = aws_dir / "keep.txt"
+    marker.write_text("repo package")
+    monkeypatch.setattr(core, "cleanup_old_output_files", lambda: None)
+
+    core.cleanup_on_exit()
+
+    assert marker.exists()
 
 
 def test_run_preflight_checks_fails_when_install_steps_fail(monkeypatch):

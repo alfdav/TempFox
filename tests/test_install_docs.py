@@ -51,6 +51,14 @@ def test_readme_documents_uv_tool_install_and_uninstall():
     assert "uv tool uninstall tempfox" in readme
     assert "uv sync" in readme
     assert "uv run tempfox" in readme
+    assert "https://github.com/alfdav/TempFox" in readme
+    assert "auto-renewal" not in readme.lower()
+    assert "Permission is hereby granted" not in readme
+    emoji = re.search(
+        r"[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0000FE0F\U0000200D]",
+        readme,
+    )
+    assert emoji is None, f"README still has emoji: {emoji.group(0)!r}"
 
 
 def test_docs_and_automation_do_not_invoke_retired_scripts():

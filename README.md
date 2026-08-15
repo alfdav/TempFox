@@ -32,38 +32,39 @@ TempFox is a streamlined Python tool that manages AWS credentials and automates 
 
 ## Installation
 
-There are several ways to install TempFox:
+Install TempFox with UV.
 
-### Using UV (Recommended)
 ```bash
-# Install UV if not already installed
+# Install UV if needed (Unix/Linux/macOS)
 curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install UV if needed (Windows PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 # Install TempFox
 uv tool install tempfox
 ```
 
-### Using Installation Scripts
-```bash
-# Unix/Linux/macOS
-curl -sSL https://raw.githubusercontent.com/alfdav/tempfox/main/install.sh | bash
+From source:
 
-# Windows PowerShell
-iwr https://raw.githubusercontent.com/alfdav/tempfox/main/install.ps1 | iex
-```
-
-### Using pip
-```bash
-pip install tempfox
-```
-
-### From Source with UV
 ```bash
 git clone https://github.com/alfdav/tempfox.git
 cd tempfox
 uv sync
 uv run tempfox
 ```
+
+`pip install tempfox` still works as a one-line alternative. It is not a second supported installer.
+
+The retired install scripts used to write Go, CloudFox, and UV onto your shell PATH. UV only puts `tempfox` on PATH. First-run preflight still installs AWS CLI, Go, and CloudFox and updates PATH for the current TempFox process only. If you want `go` or `cloudfox` in other shells, add `~/.local/go/bin` and `~/go/bin` yourself (or the Windows equivalents).
+
+### Uninstall
+
+```bash
+uv tool uninstall tempfox
+```
+
+If you previously used the retired `install.sh` / `install.ps1` scripts, remove the leftover venv (`~/.local/share/tempfox` on Unix, `%LOCALAPPDATA%\tempfox` on Windows) and any PATH lines those scripts added. Do that before `uv tool install`, or only after `uv tool uninstall`. Do not delete `~/.local/bin/tempfox` while a UV install is active; that path is the UV shim.
 
 ### Using Docker
 ```bash
@@ -84,18 +85,15 @@ docker run --rm -it tempfox
 
 TempFox automatically manages all its dependencies through comprehensive pre-flight checks:
 
-**Automatically Installed:**
+**Automatically Installed on first run (preflight):**
 - AWS CLI (if missing)
-- Go binary (if missing) 
+- Go binary (if missing)
 - CloudFox security tool (if missing)
-- UV package manager (if missing, via installation scripts)
 
 **Required:**
 - Python 3.8+
 - Internet connection for downloads
-
-**Optional but Recommended:**
-- UV package manager (for faster dependency management)
+- UV (for the supported install path)
 
 **Python Dependencies:**
 - No required third-party runtime Python dependencies
@@ -110,12 +108,11 @@ tempfox
 ```
 
 This will:
-1. ✅ Verify Python installation
-2. 📦 Check UV package manager (optional but recommended)
-3. 🔧 Install Go if missing
-4. 🦊 Install CloudFox if missing  
-5. 🔄 Install AWS CLI if missing
-6. 🚀 Launch TempFox
+1. Verify Python
+2. Install AWS CLI if missing
+3. Install Go if missing
+4. Install CloudFox if missing
+5. Launch TempFox
 
 ### Using with AWS Credentials
 
@@ -201,7 +198,7 @@ docker-compose run tempfox-dev
 - Python 3.8 or higher
 - Linux/macOS/Windows operating system
 - Internet connection
-- UV package manager (recommended) or pip
+- UV package manager
 
 ## License
 

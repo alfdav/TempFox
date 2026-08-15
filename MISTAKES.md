@@ -2,6 +2,12 @@
 
 Log mistakes (what happened, root cause, prevention).
 
+## 2026-08-15 — Leftover cleanup after `uv tool install`
+
+- What happened: First-pass docs told users to `rm ~/.local/bin/tempfox` after showing `uv tool install tempfox`, which would delete the UV shim. PATH persistence from the old scripts was also dropped without saying so.
+- Root cause: Treated leftover cleanup as an afterthought instead of ordering it before the new install, and assumed preflight replaced persistent PATH.
+- Prevention: Clean script-era venvs before `uv tool install`. Never `rm` `~/.local/bin/tempfox` while a UV install is active. Document that preflight PATH is process-only.
+
 ## 2026-08-15 — `git check-ignore` on a missing path
 
 - What happened: `git check-ignore -q .worktrees` reported "not ignored" before the directory existed, even though `.gitignore` already had `.worktrees/`.

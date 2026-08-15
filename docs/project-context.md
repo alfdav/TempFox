@@ -10,7 +10,8 @@ TempFox is a CLI tool that:
 - Verifies AWS identity via `sts get-caller-identity`.
 - Optionally saves credentials into AWS profiles.
 - Runs `cloudfox aws all-checks` and stores timestamped outputs.
-- Performs pre-flight checks/install flows for AWS CLI, Go, and CloudFox (UV optional).
+- Is installed and removed with UV (`uv tool install tempfox` / `uv tool uninstall tempfox`; from source: `uv sync` and `uv run tempfox`).
+- Performs pre-flight checks/install flows for AWS CLI, Go, and CloudFox (UV is the supported package install path, not a runtime requirement).
 
 ## Current Architecture (Behavioral)
 
@@ -25,7 +26,7 @@ TempFox is a CLI tool that:
 - Writes AWS credentials/config under `~/.aws` with `0600` permissions.
 - Keeps only a bounded number of CloudFox output files.
 - Allows listing and cleanup of TempFox-generated profiles via CLI flags.
-- Uses subprocess-based integration with local toolchain (`aws`, `go`, `cloudfox`, `uv`).
+- Uses subprocess-based integration with local toolchain (`aws`, `go`, `cloudfox`). UV is the supported package install path, not a runtime requirement.
 
 ## Priority Improvement Areas (Still Relevant)
 

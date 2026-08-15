@@ -1,6 +1,6 @@
 # TempFox Roadmap Execution Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> Historical plan from 2026-02-16. Shipped expired-token behavior is exit-only; there is no retry or renewal. See README.md.
 
 **Goal:** Turn the roadmap in `TODO.md` into shippable increments for credential lifecycle hardening, CloudFox reliability, and test coverage.
 

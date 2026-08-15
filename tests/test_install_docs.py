@@ -14,8 +14,13 @@ DOC_PATHS = (
     "README.md",
     "MIGRATION.md",
     "AGENTS.md",
+    "TODO.md",
     "docs/project-context.md",
     "docs/codex-hygiene-runbook.md",
+)
+LOWERCASE_REPO = re.compile(r"github\.com/alfdav/tempfox\b")
+EMOJI_RE = re.compile(
+    r"[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0000FE0F\U0000200D]"
 )
 INVOKE_PATHS = DOC_PATHS + (
     "Makefile",
@@ -52,13 +57,30 @@ def test_readme_documents_uv_tool_install_and_uninstall():
     assert "uv sync" in readme
     assert "uv run tempfox" in readme
     assert "https://github.com/alfdav/TempFox" in readme
-    assert "auto-renewal" not in readme.lower()
     assert "Permission is hereby granted" not in readme
-    emoji = re.search(
-        r"[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0000FE0F\U0000200D]",
-        readme,
-    )
-    assert emoji is None, f"README still has emoji: {emoji.group(0)!r}"
+
+
+def test_live_docs_match_readme_facts():
+    leftovers = {}
+    for path in DOC_PATHS:
+        text = _read(path)
+        problems = []
+        if LOWERCASE_REPO.search(text):
+            problems.append("lowercase GitHub URL")
+        if "auto-renewal" in text.lower() or "controlled retry" in text.lower():
+            problems.append("token renewal/retry claim")
+        emoji = EMOJI_RE.search(text)
+        if emoji:
+            problems.append(f"emoji {emoji.group(0)!r}")
+        if problems:
+            leftovers[path] = problems
+    assert leftovers == {}, f"docs drift from README facts: {leftovers}"
+
+
+def test_pyproject_urls_use_canonical_github_repo():
+    text = _read("pyproject.toml")
+    assert "github.com/alfdav/TempFox" in text
+    assert "github.com/alfdav/tempfox" not in text
 
 
 def test_docs_and_automation_do_not_invoke_retired_scripts():

@@ -17,6 +17,35 @@ DOC_PATHS = (
     "TODO.md",
     "docs/project-context.md",
     "docs/codex-hygiene-runbook.md",
+    "docs/plans/2026-02-16-todo-roadmap-implementation.md",
+)
+SHIPPED_TODO_MARKERS = (
+    "Last updated: 2026-08-15",
+    "PR #2",
+    "PR #3",
+    "PR #4",
+    "leftover-cleanup",
+    "empty session token",
+    "delete returns",
+    "expired-token",
+    "getpass",
+    "LICENSE",
+    "Codecov",
+    "uv tool install tempfox",
+)
+OPEN_TODO_MARKERS = (
+    "credential rotation",
+    "audit logging",
+    "multi-account",
+    "extensible checks",
+    "Go 1.21.5",
+    "unzip-into-cwd",
+    "write-before-returncode",
+    "lexical output rotation",
+    "key suffix",
+    "chmod-after-create",
+    "get_version",
+    "Docker CMD --help",
 )
 LOWERCASE_REPO = re.compile(r"github\.com/alfdav/tempfox\b")
 EMOJI_RE = re.compile(
@@ -113,3 +142,32 @@ def test_migration_cleans_script_venv_before_uv_tool_install():
         "leftover script-venv cleanup must come before uv tool install "
         "so users do not delete the UV shim"
     )
+
+
+def test_todo_marks_aug_2026_shipped_work_and_leaves_open_items():
+    todo = _read("TODO.md")
+    missing_shipped = [marker for marker in SHIPPED_TODO_MARKERS if marker not in todo]
+    assert missing_shipped == [], f"TODO.md missing shipped markers: {missing_shipped}"
+    missing_open = [
+        marker for marker in OPEN_TODO_MARKERS if marker.lower() not in todo.lower()
+    ]
+    assert missing_open == [], f"TODO.md dropped open leftovers: {missing_open}"
+    assert "Last updated: 2026-02-16" not in todo
+
+
+def test_migration_uses_make_hygiene_not_black_isort():
+    migration = _read("MIGRATION.md")
+    assert "make hygiene-fast" in migration
+    assert "make hygiene" in migration
+    assert "uv run black" not in migration
+    assert "uv run isort" not in migration
+
+
+def test_roadmap_plan_status_matches_main():
+    plan = _read("docs/plans/2026-02-16-todo-roadmap-implementation.md")
+    assert "Task 1:" in plan and "done" in plan.lower()
+    assert "Task 7:" in plan
+    assert "rotation-workflow-spec.md" not in plan or "not created" in plan.lower()
+    assert not (REPO_ROOT / "docs/plans/rotation-workflow-spec.md").exists()
+    assert not (REPO_ROOT / "docs/plans/audit-logging-spec.md").exists()
+    assert not (REPO_ROOT / "docs/plans/multi-account-spec.md").exists()

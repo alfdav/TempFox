@@ -121,11 +121,9 @@ isort .
 ruff check .
 mypy tempfox/
 
-# New way with UV
-uv run black .
-uv run isort .
-uv run ruff check .
-uv run mypy tempfox/
+# Current gates (ruff + mypy + pytest + repo-scan via Makefile / pre-commit)
+make hygiene-fast
+make hygiene
 ```
 
 ### Adding Dependencies

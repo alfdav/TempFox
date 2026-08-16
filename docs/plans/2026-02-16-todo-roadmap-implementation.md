@@ -1,6 +1,17 @@
 # TempFox Roadmap Execution Implementation Plan
 
-> Historical plan from 2026-02-16. Shipped expired-token behavior is exit-only; there is no retry or renewal. See README.md.
+> Historical plan from 2026-02-16. Shipped expired-token behavior is exit-only; there is no renewal. See README.md.
+
+**Task status on `main` @ `eefccea` (2026-08-15):**
+
+- Task 1: done. Module tests exist for `aws_profiles`, `cloudfox`, `dependencies`, and `core`.
+- Task 2: done as exit-only (PR #2). No renewal. No recursive `main()`. The prompt-and-reenter steps below are historical and were not shipped.
+- Task 3: done. `validate_session_token` is on main.
+- Task 4: done. Nonzero CloudFox exits are logged. PR #2 also classifies expired-token on all-checks.
+- Task 5: done. Retention tests exist. Leftover: lexical output rotation and write-before-returncode.
+- Task 6: done. CLI tests cover `--list-profiles`, `--cleanup-profiles`, and `--no-profile`.
+- Task 7: not done. Rotation/audit/multi-account spec files were not created. Those items stay open in `TODO.md`.
+- Task 8: historical verification. Later PRs #2, #3, and #4 landed on main.
 
 **Goal:** Turn the roadmap in `TODO.md` into shippable increments for credential lifecycle hardening, CloudFox reliability, and test coverage.
 
@@ -68,7 +79,7 @@ git add tests/test_core.py tests/test_aws_profiles.py tests/test_cloudfox.py tes
 git commit -m "test: expand module-level coverage for refactored code"
 ```
 
-### Task 2: Replace Expired Token Recursion With Controlled Retry Flow
+### Task 2: Replace Expired Token Recursion With Exit-Only Classify
 
 **Files:**
 - Modify: `tempfox/core.py`
@@ -296,11 +307,13 @@ git commit -m "test: add CLI flag behavior coverage"
 
 ### Task 7: Document Next/Later Track As Issue-Ready Specs
 
-**Files:**
+**Status:** not done. Spec files were not created. Do not invent them. Open items stay in `TODO.md`.
+
+**Files (historical, not created):**
 - Modify: `TODO.md`
-- Create: `docs/plans/rotation-workflow-spec.md`
-- Create: `docs/plans/audit-logging-spec.md`
-- Create: `docs/plans/multi-account-spec.md`
+- Create: `docs/plans/rotation-workflow-spec.md` (not created)
+- Create: `docs/plans/audit-logging-spec.md` (not created)
+- Create: `docs/plans/multi-account-spec.md` (not created)
 
 **Step 1: Create concise issue-ready specs**
 

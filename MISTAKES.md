@@ -2,6 +2,12 @@
 
 Log mistakes (what happened, root cause, prevention).
 
+## 2026-08-15 — TODO/plan/MIGRATION left stale after PRs #2–#4
+
+- What happened: `main` @ `eefccea` had leftover-cleanup, UV-only install, and the README rewrite, but `TODO.md` still said `Last updated: 2026-02-16`, the 2026-02-16 plan still read as unstarted, and `MIGRATION.md` still told people `uv run black` / `uv run isort`.
+- Root cause: Shipped PRs updated code and README; the roadmap and migration gates were treated as historical and skipped.
+- Prevention: After a merge that changes behavior or gates, update `TODO.md` status and grep live docs for the old commands/dates.
+
 ## 2026-08-15 — README rewrite left other docs stale
 
 - What happened: The first README cleanup fixed clone URL case and dropped the auto-renewal claim, but `MIGRATION.md` still used `alfdav/tempfox` and `TODO.md` still described a retry flow.

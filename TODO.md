@@ -1,94 +1,103 @@
 # TempFox Roadmap
 
-Last updated: 2026-02-16
+Last updated: 2026-08-15
 
-This roadmap keeps the useful ideas from the old TODO and turns them into actionable work with clear done criteria.
+Shipped vs open as of `main` @ `eefccea` (merge #4).
 
-## Now (High Priority)
+## Shipped (Aug 2026)
 
-### 1. Credential/session lifecycle hardening
-Goal: make AKIA/ASIA flows predictable and safe under failure.
+Evidence: PRs #2, #3, #4.
 
-Done criteria:
-- ASIA flow validates missing/empty session token with clear remediation guidance.
-- Expired-token handling does not recurse into `main()`; expired tokens exit. There is no renewal.
-- Error messages distinguish auth errors vs tool/runtime errors.
-- Tests cover AKIA happy path, ASIA happy path, missing token, and expired token branches.
+### PR #2 — Harden credential cleanup and unblock Python CI
 
-### 2. Comprehensive test coverage for critical paths
-Goal: reduce regressions during refactors.
+- leftover-cleanup safety: installer cleanup only removes paths TempFox registered.
+- AKIA empty session token omit (and inherited empty tokens are popped).
+- honest delete returns: `delete_aws_profile` is the AND of credentials/config writes.
+- expired-token classify on connection test and all-checks. No renewal. No recursive `main()`.
+- access-key `getpass` (same as secret/token).
+- LICENSE (MIT).
+- Codecov best-effort (`codecov-action@v5`, `fail_ci_if_error: false`). No token invented.
+- profile / CLI / CloudFox tests (`tests/test_aws_profiles.py`, CLI flags through `main`, JSON vs raw-text, retention).
 
-Done criteria:
-- Add tests for `tempfox/aws_profiles.py`, `tempfox/dependencies.py`, and `tempfox/cloudfox.py` critical behaviors.
-- Mock `subprocess.run` in tests for AWS CLI, Go, and CloudFox interactions.
-- Add CLI-level tests for `--list-profiles`, `--cleanup-profiles`, and `--no-profile` behavior.
-- CI remains green with `ruff`, `mypy`, and `pytest`.
+### PR #3 — UV-only install
 
-### 3. CloudFox run reliability improvements
-Goal: make CloudFox execution outcomes easier to trust and debug.
+- `install.sh` / `install.ps1` / `uninstall.sh` / `uninstall.ps1` removed.
+- Install: `uv tool install tempfox`. Remove: `uv tool uninstall tempfox`.
+- From source: `uv sync` / `uv run tempfox`.
+- Preflight PATH is for the current TempFox process only.
 
-Done criteria:
-- Non-zero CloudFox exits are surfaced explicitly (exit code + stderr summary).
-- Output file behavior is deterministic for success/failure paths.
-- JSON output handling is tested for both valid JSON and raw-text output.
-- Cleanup of old output files is covered by tests.
+### PR #4 — README rewrite
 
-## Next (Medium Priority)
+- No emoji, no hype, one UV install path.
+- Flags documented: `--skip-preflight`, `--version`/`-v`, `--list-profiles`, `--cleanup-profiles`, `--no-profile`.
+- Clone URL: `https://github.com/alfdav/TempFox`.
+- Expired tokens exit. There is no renewal.
 
-### 4. Credential rotation workflow
-Goal: support safer credential refresh without manual file editing.
+Old "Now" items 1–3 (session lifecycle, critical-path tests, CloudFox nonzero/JSON/retention) are done by the above. ASIA empty-token validation (`validate_session_token`) is on main.
 
-Done criteria:
-- Add an explicit rotation workflow (new command/flag set) for existing TempFox profiles.
-- Rotation preserves profile metadata (region/output) unless user overrides.
-- Include dry-run mode showing proposed changes.
-- Tests cover rotate success, missing profile, and overwrite confirmation paths.
+## Open
 
-### 5. Audit logging foundation
-Goal: provide a minimal audit trail for credential/profile actions.
+Do not treat these as shipped.
 
-Done criteria:
-- Introduce structured audit events for profile create/update/delete and CloudFox execution start/end.
-- Add configurable log target (stdout vs file path).
-- Ensure secrets are never logged.
-- Tests validate redaction and event shape.
+### Credential rotation
 
-### 6. Preflight/install hardening
-Goal: reduce platform-specific installation failures.
+Goal: safer credential refresh without manual file editing.
 
-Done criteria:
-- Improve OS/arch validation and unsupported-platform messages.
-- Add timeout/error categorization for AWS CLI, Go, and CloudFox install steps.
-- Add tests for platform URL resolution and failure handling.
-- Document known prerequisites per OS in README.
+Done criteria (still unmet):
+- Explicit rotation workflow (new command/flag set) for existing TempFox profiles.
+- Rotation preserves profile metadata (region/output) unless the user overrides.
+- Dry-run mode showing proposed changes.
+- Tests for rotate success, missing profile, and overwrite confirmation.
 
-## Later (Lower Priority)
+No rotation spec file. Do not invent one here.
 
-### 7. Multi-account orchestration
+### Audit logging
+
+Goal: minimal audit trail for credential/profile actions.
+
+Done criteria (still unmet):
+- Structured audit events for profile create/update/delete and CloudFox start/end.
+- Configurable log target (stdout vs file path).
+- Secrets never logged.
+- Tests for redaction and event shape.
+
+No audit spec file. Do not invent one here.
+
+### Multi-account
+
 Goal: run checks across multiple profiles/accounts in one invocation.
 
-Done criteria:
-- Accept profile selectors and batch execution strategy.
+Done criteria (still unmet):
+- Profile selectors and a batch execution strategy.
 - Aggregate result index with per-account status.
-- Add safety guardrails to avoid accidental broad scans.
+- Guardrails against accidental broad scans.
 
-### 8. Extensible checks model
-Goal: allow incremental addition of non-CloudFox checks.
+No multi-account spec file. Do not invent one here.
 
-Done criteria:
-- Define a small internal checks interface.
-- Implement one additional check type as proof of extensibility.
-- Document extension points.
+### Extensible checks
 
-### 9. UX and documentation polish
-Goal: reduce operator confusion and setup friction.
+Goal: add non-CloudFox checks incrementally.
 
-Done criteria:
-- Add a concise troubleshooting section for common auth/install failures.
-- Add examples for AKIA vs ASIA with expected prompts/outputs.
-- Keep docs aligned with actual dependencies and module layout.
+Done criteria (still unmet):
+- Small internal checks interface.
+- One additional check type as proof.
+- Documented extension points.
 
-## Notes
+### Known leftovers (not claimed done)
 
-- This file intentionally replaces the old status-style TODO with priority-driven execution items.
-- New work should link to issues/PRs under each roadmap item as they are created.
+- Go 1.21.5 vs current CloudFox (`tempfox/dependencies.py` still pins `go_version = "1.21.5"`).
+- `install_aws_cli` unzip-into-cwd (`unzip -o` can overwrite a pre-existing cwd `aws/`).
+- CloudFox write-before-returncode (`.txt`/`.json` are written before the exit-code check).
+- lexical output rotation (`cleanup_old_output_files` sorts glob names, not mtime).
+- profile names embedding key suffix (`generate_profile_name` uses the last 8 characters of the access key).
+- chmod-after-create (`write_aws_*` writes then `chmod` 0600; a crash between those steps can leave a wider mode).
+- version 1.0.1 vs PyPI stale wheel / `get_version` 1.0.0 fallback (`pyproject.toml` is 1.0.1; `get_version` falls back to `1.0.0`). Do not publish or bump from this file.
+- Docker CMD --help (`Dockerfile` `CMD ["--help"]`).
+
+### Preflight/install hardening (remaining)
+
+UV-only install shipped in PR #3. Still open: OS/arch validation messages, timeout/error categorization for AWS CLI/Go/CloudFox installs, and the unzip-into-cwd leftover above.
+
+### UX leftovers
+
+README install/run path shipped in PR #4. Still open: a short troubleshooting section and AKIA vs ASIA prompt/output examples.
